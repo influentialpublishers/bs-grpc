@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "clean": "bsb -clean-world",
-    "build": "bsb -make-world",
+    "build": "npm run compile-static-protobuf-compiler-protobufs",
     "watch": "bsb -make-world -w",
     "compile-static-protobuf-compiler-protobufs": "./node_modules/.bin/pbjs -t static-module -p node_modules/grpc-tools/bin/google/protobuf node_modules/grpc-tools/bin/google/protobuf/compiler/plugin.proto > src/protobufs.js",
     "compile-static-reasonml-bindings": "PATH=\"./bin:$PATH\" ./node_modules/.bin/grpc_tools_node_protoc example/hello.proto --reasonml_out=src"
