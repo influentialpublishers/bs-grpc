@@ -6,7 +6,7 @@
     "build": "bsb -make-world",
     "watch": "bsb -make-world -w",
     "compile-static-protobuf-compiler-protobufs": "./node_modules/.bin/pbjs -t static-module -p node_modules/grpc-tools/bin/google/protobuf node_modules/grpc-tools/bin/google/protobuf/compiler/plugin.proto > src/protobufs.js",
-    "compile-static-reasonml-bindings": "PATH="./bin:$PATH" ./node_modules/.bin/grpc_tools_node_protoc example/hello.proto --reasonml_out=src"
+    "compile-static-reasonml-bindings": "PATH=\"./bin:$PATH\" ./node_modules/.bin/grpc_tools_node_protoc example/hello.proto --reasonml_out=src"
   },
   "keywords": [
     "BuckleScript"
