@@ -82,11 +82,11 @@ const mapType = (fieldProto, scopeName) => {
   const justType = mapJustType(fieldProto, scopeName)
   switch (fieldProto.label) {
     default:
-    case protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_OPTIONAL: optional = true;
+    case protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_OPTIONAL:
       return `option(${justType})`
-    case protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_REQUIRED: required = true; break
+    case protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_REPEATED:
       return `array(${justType})`
-    case protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_REPEATED: repeated = true; break
+    case protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_REQUIRED:
       return justType
   }
 }
