@@ -142,6 +142,25 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     protoFile.enumType.forEach(enumType => {
       handleEnumType(protoFileModule, enumType)
     })
+    protoFile.service.forEach(service => {
+      const moduleName = joinModuleName(protoFileModuleName, service.name)
+      const serviceModule = {
+        modules: [],
+        moduleName,
+        rpcs: service.method.map(method => {
+          /* TODO support streaming */
+          const name = method.name
+          const inputType = mapMessageType(method.inputType)
+          const outputType = mapMessageType(method.outputType)
+          return {
+            name,
+            inputType,
+            outputType
+          }
+        })
+      }
+      protoFileModule.modules[lastDottedPart(moduleName)] = serviceModule
+    })
   })
 
   function identifyModules() {
@@ -225,6 +244,14 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         })
         code += ';\n'
       }
+    }
+    /* emit code for any RPCs */
+    if ('rpcs' in module) {
+      module.rpcs.forEach(rpc => {
+        const inputType = resolveRelative(rpc.inputType, module.moduleName)
+        const outputType = resolveRelative(rpc.outputType, module.moduleName)
+        code += `let ${rpc.name} = (input:${inputType}):${outputType} => foo;\n`;
+      })
     }
     return code
   }
