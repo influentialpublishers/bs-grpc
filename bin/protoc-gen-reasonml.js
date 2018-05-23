@@ -260,11 +260,13 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     }
     /* emit code for any RPCs */
     if ('rpcs' in module) {
+      code += '[@bs.deriving abstract]\ntype t = {\n'
       module.rpcs.forEach(rpc => {
         const inputType = resolveRelative(rpc.inputType, module.moduleName)
         const outputType = resolveRelative(rpc.outputType, module.moduleName)
-        code += `let ${lower1(rpc.name)} = (input:${inputType}):${outputType} => foo;\n`;
+        code += `${lower1(rpc.name)}: ${inputType} => ${outputType},\n`;
       })
+      code += '}\n'
     }
     /* emit code for any services defined in immediate submodules */
     let foundServices = false
