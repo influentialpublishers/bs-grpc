@@ -207,11 +207,17 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     /* emit code for any type contained in our module */
     if ('t' in module) {
       if ('fields' in module.t) {
-        code += "type t = {\n";
-        module.t.fields.forEach(field => {
-          code += `${field.name} : ${mapType(field, module.moduleName)},\n`
-        })
-        code += "};\n";
+        code += "type t = ";
+        if (module.t.fields.length) {
+          code += "{\n"
+          module.t.fields.forEach(field => {
+            code += `${field.name} : ${mapType(field, module.moduleName)},\n`
+          })
+          code += "}";
+        } else {
+          code += "unit"
+        }
+        code += ";\n";
       } else if ('enumValues' in module.t) {
         code += 'type t =\n';
         module.t.enumValues.forEach(enumValue => {
