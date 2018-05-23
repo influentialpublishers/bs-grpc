@@ -31,6 +31,7 @@ const resolveRelative = (moduleName, scopeName) => {
       return moduleParts.slice(i).join('.')
   throw new Error("how do i name myself?")
 }
+const lower1 = s => s[0].toLowerCase()+s.substr(1)
 const firstPart = s => s.split('.')[0]
 /* TODO double-check this work
  * TODO what is this called?
@@ -262,7 +263,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
       module.rpcs.forEach(rpc => {
         const inputType = resolveRelative(rpc.inputType, module.moduleName)
         const outputType = resolveRelative(rpc.outputType, module.moduleName)
-        code += `let ${rpc.name} = (input:${inputType}):${outputType} => foo;\n`;
+        code += `let ${lower1(rpc.name)} = (input:${inputType}):${outputType} => foo;\n`;
       })
     }
     return code
