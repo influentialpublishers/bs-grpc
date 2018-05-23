@@ -266,6 +266,22 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         code += `let ${lower1(rpc.name)} = (input:${inputType}):${outputType} => foo;\n`;
       })
     }
+    /* emit code for any services defined in immediate submodules */
+    let foundServices = false
+    let serviceImplementationsCode = ''
+    for (let serviceModuleName in module.modules) {
+      const serviceModule = module.modules[serviceModuleName]
+      if ('rpcs' in serviceModule) {
+        foundServices = true
+        serviceModule.rpcs.forEach(rpc => {
+          serviceImplementationsCode += `[@bs.optional] ${lower1(rpc.name)}: ${rpc.name}.t,\n`
+        })
+      }
+    }
+    if (foundServices)
+      code += '[@bs.deriving abstract] type serviceImplementations = {\n'
+        + serviceImplementationsCode
+        + '};\n';
     return code
   }
 
