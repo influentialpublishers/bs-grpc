@@ -1,6 +1,5 @@
 /* Why is protobufjs giving me JS Number values to represent protobufs
- * enumnd
- * values when grpc gives me JS String values?
+ * enum values when grpc gives me JS String values?
  *
  * https://github.com/dcodeIO/protobuf.js/issues/97
  */
