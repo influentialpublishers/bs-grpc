@@ -48,12 +48,6 @@ const sortish = (a, f) => {
   }
 }
 
-/* TODO ask nate and aaron to look over these type mappings */
-console.error('hoho', util.inspect(
-  protobufs.google.protobuf.FieldDescriptorProto.Type,
-  {depth:99}
-))
-
 const mapType = (type, scopeName) => {
   switch (type.type) {
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_GROUP:
@@ -93,16 +87,12 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
 
   // XXX deleting noise garbage i don't want to see
   req.protoFile.forEach(protoFile => delete protoFile.sourceCodeInfo)
-  console.error(util.inspect(req, {depth:99}))
 
   const rootModule = {moduleName:'*root*', modules:{}}
 
   function handleMessageType(parentModule, messageType) {
-    //console.error('handleMessageType()', typeof parentModule, typeof messageType)
     /* Create module for this message type */
-    //console.error('lol', parentModule.moduleName, messageType.name)
     const moduleName = dottedModuleName(joinModuleName(parentModule.moduleName, messageType.name))
-    console.error('moduleName=', moduleName)
     const module =  {
       modules: {},
       moduleName
@@ -121,7 +111,6 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     messageType.enumType.forEach(enumType => {
       handleEnumType(module, enumType)
     })
-    //console.error('handleMessageType() <<<')
   }
 
   function handleEnumType(parentModule, enumType) {
@@ -136,14 +125,12 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
 
   /* For each .proto file... */
   req.protoFile.forEach(protoFile => {
-    //console.error('LOLOLOL', protoFile.sourceCodeInfo)
     if (!protoFile.package) {
       console.error('your .proto file must contain a package name')
       process.exit(1)
     }
     /* Create module for this proto file */
     const protoFileModuleName = dottedModuleName(protoFile.package)
-    console.error('req.protoFile.forEach sez protoFileModuleName=', protoFileModuleName)
     const protoFileModule = {
       modules: {},
       moduleName: protoFileModuleName
@@ -158,11 +145,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     })
   })
 
-  function resolveTypeToModule(typeName) {
-    console.error('resolveTypeToModule()', typeName)
-  }
   function identifyModules() {
-    console.error('identifyModules() sez rootModule=', util.inspect(rootModule, {depth:99}))
     const foundModules = {}
     recurse(rootModule)
     function recurse(module) {
@@ -170,17 +153,10 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
       for (let moduleName in module.modules)
         recurse(module.modules[moduleName])
     }
-    console.error('identified these moduels:', foundModules)
     return foundModules;
   }
-  /* produce depndency graph. among independent subgraphs, order does not
-   * matter. for cyclic graphs, emitted code must be mutually recursive
-   *
-   * 
-   */
   function analyzeGraph() {
     const modules = identifyModules();
-    console.error('analyzeGraph() sez modules=', modules)
     for (let moduleName in modules) {
       modules[moduleName].dependencies = {}
       modules[moduleName].visiting = false
@@ -193,7 +169,6 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     }
     for (let moduleName in modules)
       recurse(modules[moduleName], 0)
-    //console.error(util.inspect(modules, {depth:99}))
   }
   analyzeGraph()
   /* this is a little sloppy but gets us what we need */
@@ -218,15 +193,11 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     code += `/* dependencies = "${Object.keys(module.dependencies).join('", "')}" */\n`
     /* sort sub-modules by dependency */
     const subModuleNames = Object.keys(module.modules)
-    console.error('modules pre-sort:', subModuleNames)
     sortish(subModuleNames, (a,b) => {
       const ma = module.modules[a]
       const mb = module.modules[b]
-      const rval = a in mb.dependencies ? 1 : b in ma.dependencies ? -1 : 0
-      console.error('module sort returning', rval)
-      return rval
+      return a in mb.dependencies ? 1 : b in ma.dependencies ? -1 : 0
     })
-    console.error('modules post-sort:', subModuleNames)
     subModuleNames.sort((a,b) => module.modules[a].score-module.modules[b].score)
     /* emit code for each sub-module in order */
     subModuleNames.forEach(subModuleName => {
@@ -253,12 +224,12 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     return code
   }
 
-  console.error('everything:', util.inspect(rootModule, {depth:99}))
   const emission = FILE_MAGIC + emitModule(rootModule)
 
   if (process.stdout.isTTY) {
-    console.error('rootModule=')
-    console.error(util.inspect(rootModule, {depth:99}))
+    console.log('stdout is a TTY; printing human-readable data')
+    console.log('output module tree:', util.inspect(rootModule, {depth:99}))
+    console.log('output source code:')
     console.log(emission)
   } else {
     process.stdout.write(
