@@ -47,15 +47,15 @@ const sortish = (a, f) => {
   }
 }
 
-const mapType = (type, scopeName) => {
-  switch (type.type) {
+const mapJustType = (fieldProto, scopeName) => {
+  switch (fieldProto.type) {
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_GROUP:
     default:
       return 'unknown_type /*'+type+'*/';
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_ENUM:
-      return resolveRelative(mapEnumType(type.typeName), scopeName)
+      return resolveRelative(mapEnumType(fieldProto.typeName), scopeName)
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_MESSAGE:
-      return resolveRelative(mapMessageType(type.typeName), scopeName)
+      return resolveRelative(mapMessageType(fieldProto.typeName), scopeName)
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_BOOL:
       return 'bool'
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_BYTES:
@@ -76,6 +76,18 @@ const mapType = (type, scopeName) => {
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_UINT32:
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_UINT64:
       return 'int'
+  }
+}
+const mapType = (fieldProto, scopeName) => {
+  const justType = mapJustType(fieldProto, scopeName)
+  switch (fieldProto.label) {
+    default:
+    case protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_OPTIONAL: optional = true;
+      return `option(${justType})`
+    case protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_REQUIRED: required = true; break
+      return `array(${justType})`
+    case protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_REPEATED: repeated = true; break
+      return justType
   }
 }
 
