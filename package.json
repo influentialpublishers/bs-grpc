@@ -11,7 +11,8 @@
   "keywords": [
     "BuckleScript"
   ],
-  "author": "",
+  "author": "\"Don Viszneki\" <dviszneki@influential.co>",
+  "main": "index.js",
   "license": "MIT",
   "devDependencies": {
     "bs-platform": "^3.0.0",
