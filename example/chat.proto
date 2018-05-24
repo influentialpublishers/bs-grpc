@@ -1,0 +1,10 @@
+syntax = "proto3";
+package hello;
+message Message {
+  string message = 1;
+}
+message MessageAck {
+}
+service ChatService {
+  rpc SendMessage (Message) returns (MessageAck) {}
+}
