@@ -97,7 +97,7 @@ const boilerPlate = `
   type grpcModule = {
     [@bs.as "ServerCredentials"] serverCredentials : Server.serverCredentialsConstructor,
   };
-  [@module] external grpc : grpcModule = "";
+  [@bs.module] external grpc : grpcModule = "";
 
   /* use this to load a nodejs Buffer object containing a base64-encoded
    * PEM format key/certificate
