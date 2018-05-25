@@ -107,7 +107,7 @@ const boilerPlate = `
 
   /* Consumer interfaces */
   let createSslCredentials = (rootCACert:buffer, privateKey:buffer, certChain:buffer) => Server.(
-      grpc |. grpcCredentials |. createSsl(rootCACert, [| ServerKeyAndCert.t( ~privateKey=privateKey, ~certChain=certChain ) |])
+      grpcCredentials |. createSsl(rootCACert, [| ServerKeyAndCert.t( ~privateKey=privateKey, ~certChain=certChain ) |])
   );
 `
 
