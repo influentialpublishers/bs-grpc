@@ -424,7 +424,8 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     }
     if (module === rootModule) {
       const services = identifyServices()
-      let serviceImplementationsCode = ''
+      let serviceImplementationsFields = ''
+      let addServicesCode = ''
       console.error('services=', services)
       for (let serviceModuleName in services) {
         const serviceModule = services[serviceModuleName].module
@@ -433,32 +434,25 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           const fieldName = lower1(lastDottedPart(serviceModule.moduleName))
           const packageName = "TODO_PackageName." + fieldName;
           const fieldType = resolveRelative(serviceModule.moduleName, module.moduleName) + '.t'
-            serviceImplementationsCode += `
-              [@bs.optional] ${fieldName}: ${fieldType},\n`
+          serviceImplementationsFields += `${fieldName}: option(${fieldType}),\n`
+          addServicesCode += `switch (serviceImplementations.${fieldName}) {
+          | None => ()
+          | Some(serviceImplementation) => ${serviceModule.moduleName}.addService(server, serviceImplementation)
+          };`
         }
       }
 
       console.error('services=')
       console.error(services)
       code += `
-        [@bs.deriving abstract] type serviceImplementations = {
-          ${serviceImplementationsCode}
+        type serviceImplementations = {
+          ${serviceImplementationsFields}
         };
 
-        let addServices : (server, serviceImplementations) => unit = [%bs.raw {|
-          function (server, serviceImplementations) {
-            console.log('addServices got the following service implementations:', Object.keys(serviceImplementations))
-            ${objJoin(objMap(services, service => `
-              if (${JSON.stringify(service.name)} in serviceImplementations) {
-                server.addService(
-                  ${service.name},
-                  ${service.name},
-                  serviceImplementations[${JSON.stringify(service.name)}]
-                )
-              }
-            `, '\n'))}
-          }
-        |}];
+        let addServices = (server:server, serviceImplementations:serviceImplementations) => {
+          ${addServicesCode}
+          ()
+        };
       `
     }
     return code

@@ -8,15 +8,14 @@ Protobufs.Server.serverBind(
 
 Protobufs.addServices(
   server,
-  Protobufs.serviceImplementations(
-    ~chatService=
-      Protobufs.Chat.ChatService.t(~sendMessage=message => {
+  {
+    chatService:
+      Some(Protobufs.Chat.ChatService.t(~sendMessage=message => {
         Js.log2("someone invoked sendMessage:", message);
         /* Send Ack */
         ();
-      }),
-    (),
-  ),
+      })),
+  },
 );
 
 Protobufs.Server.start(server);
