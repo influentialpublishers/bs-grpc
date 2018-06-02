@@ -123,6 +123,15 @@ const boilerPlate = `
   let createSslCredentials = (rootCACert:buffer, privateKey:buffer, certChain:buffer) => Server.(
       grpcCredentials |. createSsl(rootCACert, [| ServerKeyAndCert.t( ~privateKey=privateKey, ~certChain=certChain ) |])
   );
+
+/** Convenience function to instantiate and conifgure a GRPC server */
+let createInsecureServer = (listenAddress, serviceImplementations) => {
+  let server = Server.make();
+  Server.serverBind(server, listenAddress, Server.createInsecure());
+  addServices(server, serviceImplementations);
+  Server.start(server);
+  server;
+};
 `
 
 const dottedModuleName = moduleName =>
