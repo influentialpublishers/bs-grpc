@@ -1,17 +1,20 @@
 {
   "name": "bs-grpc",
   "version": "0.1.0",
-  "sources": {
+  "sources": [{
     "dir" : "src",
     "subdirs" : true
-  },
+  },{
+    "dir" : "example",
+    "subdirs" : true
+  }],
   "package-specs": {
     "module": "commonjs",
     "in-source": true
   },
   "suffix": ".bs.js",
   "bs-dependencies": [
-      // add your bs-dependencies here 
+    "reason-future"
   ],
   "warnings": {
     "error" : "+101"

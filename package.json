@@ -6,6 +6,7 @@
     "build": "npm run compile-static-protobuf-compiler-protobufs",
     "watch": "bsb -make-world -w",
     "compile-static-protobuf-compiler-protobufs": "./node_modules/.bin/pbjs -t static-module -p node_modules/grpc-tools/bin/google/protobuf node_modules/grpc-tools/bin/google/protobuf/compiler/plugin.proto > src/protobufs.js",
+    "compile-static-protobuf-compiler-protobufs-with-extensions": "./node_modules/.bin/pbjs -t static-module -p node_modules/grpc-tools/bin/google/protobuf myplugin.proto > src/protobufs.js",
     "compile-static-reasonml-bindings": "PATH=\"./bin:$PATH\" ./node_modules/.bin/grpc_tools_node_protoc example/hello.proto --reasonml_out=src"
   },
   "keywords": [
@@ -15,9 +16,9 @@
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
-    "bs-platform": "^3.0.0",
-    "grpc-tools": "^1.6.6",
-    "grpc": "^1.11.3"
+    "bs-platform": "^3.1.5",
+    "grpc": "^1.11.3",
+    "grpc-tools": "^1.6.6"
   },
   "peerDependencies": {
     "bs-platform": "^3.0.0",
@@ -27,6 +28,7 @@
     "@grpc/grpc-js": "^0.1.0",
     "@grpc/proto-loader": "^0.1.0",
     "protobufjs": "^6.8.6",
-    "read-all-stream": "^3.1.0"
+    "read-all-stream": "^3.1.0",
+    "reason-future": "^2.2.1"
   }
 }
