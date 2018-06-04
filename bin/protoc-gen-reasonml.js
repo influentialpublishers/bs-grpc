@@ -180,9 +180,9 @@ const mapJustType = (fieldProto, scopeName) => {
     default:
       return 'unknown_type /*'+type+'*/';
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_ENUM:
-      return resolveRelative(mapEnumType(fieldProto.typeName), scopeName)
+      return upper1(resolveRelative(mapEnumType(fieldProto.typeName), scopeName))
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_MESSAGE:
-      return resolveRelative(mapMessageType(fieldProto.typeName), scopeName)
+      return upper1(resolveRelative(mapMessageType(fieldProto.typeName), scopeName))
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_BOOL:
       return 'bool'
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_BYTES:
@@ -468,7 +468,6 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
       const services = identifyServices()
       let serviceImplementationsFields = ''
       let addServicesCode = ''
-      console.error('services=', services)
       for (let serviceModuleName in services) {
         const serviceModule = services[serviceModuleName].module
         if ('rpcs' in serviceModule) {
@@ -487,8 +486,6 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         }
       }
 
-      console.error('services=')
-      console.error(services)
       code += `
         type serviceImplementations = {
           ${serviceImplementationsFields}
