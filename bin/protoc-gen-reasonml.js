@@ -227,6 +227,24 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
   // XXX deleting noise garbage i don't want to see
   req.protoFile.forEach(protoFile => delete protoFile.sourceCodeInfo)
 
+  /* In order to support custom options in our .proto file, we need to allocate
+   * message fields in the protobuf messages that protoc uses to represent our
+   * .proto files to our plugin. To do this we need to use the "extend"
+   * capability of protobufs. To my intuition, we would apply this step when
+   * generating our protoc protobuf compiler, so that the compiler knows about
+   * our custom options and how to represent them to our plugin. I
+   * haven't been able to figure out a way to do this. Instead, however, we can
+   * apparently do the extend at protoc's runtime. Until a better solution is
+   * discovered, I am blacklisting the following root packages (__no_emit being
+   * my own invention) so that we do not emit code for them.
+   */
+  const packagePrefixesToIgnore = ['__no_emit', 'google']
+  req.protoFile = req.protoFile.filter(protoFile =>
+    !packagePrefixesToIgnore.some(prefix =>
+      protoFile.package.substr(0, prefix.length) == prefix
+    )
+  )
+
   const rootModule = {moduleName:'*root*', modules:{}}
 
   function handleMessageType(parentModule, messageType) {
