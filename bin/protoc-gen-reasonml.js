@@ -453,6 +453,9 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
                 justNull
               ) => unit
             ) => unit;
+            let getMeta : call => Js.Dict.t(Js.Json.t) = [%bs.raw {|
+              call => call.getMap()
+            |}];
           };
         `
       })
