@@ -1,7 +1,8 @@
 let lastMessage = ref("out of the silent planet comes a message");
 let server =
-  Protobufs.createInsecureServer(
+  Protobufs.createServer(
     "127.0.0.1:12345",
+    Protobufs.Server.createInsecure(),
     {
       chatService:
         Some(
@@ -20,7 +21,7 @@ let server =
               message
             );
             /* Send Ack */
-            let ack = Protobufs.Chat.MessageAck.make(~xResult=Protobufs.Chat.MessageAck.Message(replyMessage), ());
+            let ack = Protobufs.Chat.MessageAck.make(~result=Protobufs.Chat.MessageAck.Message(replyMessage), ());
             Js.log2("ack=", ack);
             Js.log2("callback=", callback);
             callback(.
