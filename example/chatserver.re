@@ -1,9 +1,10 @@
 let lastMessage = ref("out of the silent planet comes a message");
+let credentials = Grpc.Server.Credentials.Insecure.make();
 let server =
   Grpc.Server.make(
-    "127.0.0.1:12345",
-    Grpc.Server.Credentials.Insecure.make(),
-    {
+    ~host="127.0.0.1:12345",
+    ~credentials,
+    ~services={
       chatService:
         Some(
           Grpc.Chat.ChatService.t(~sendMessage=(call, callback) => {

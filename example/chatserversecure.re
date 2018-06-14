@@ -7,9 +7,9 @@ let credentials = Grpc.Server.Credentials.Ssl.make(
 
 let server =
   Grpc.Server.make(
-    "127.0.0.1:12345",
-    credentials,
-    {
+    ~host="127.0.0.1:12345",
+    ~credentials,
+    ~services={
       chatService:
         Some(
           Grpc.Chat.ChatService.t(~sendMessage=(call, callback) => {

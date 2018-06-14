@@ -95,10 +95,10 @@ const boilerPlate = `
     external start : server => unit = "start";
 
     /** Convenience function to instantiate and configure a GRPC server */
-    let make = (listenAddress, serverCredentials, serviceImplementations) => {
+    let make = (~host, ~credentials, ~services) => {
       let server = newServer();
-      serverBind(server, listenAddress, serverCredentials);
-      addServices(server, serviceImplementations);
+      serverBind(server, host, credentials);
+      addServices(server, services);
       start(server);
       server;
     };
