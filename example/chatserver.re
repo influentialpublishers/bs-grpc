@@ -1,6 +1,6 @@
 let lastMessage = ref("out of the silent planet comes a message");
 let server =
-  Grpc.createServer(
+  Grpc.Server.make(
     "127.0.0.1:12345",
     Grpc.Server.Credentials.Insecure.make(),
     {

@@ -86,13 +86,22 @@ const boilerPlate = `
     };
 
     [@bs.module "grpc"][@bs.new]
-    external make : unit => server = "Server";
+    external newServer : unit => server = "Server";
 
     [@bs.send]
     external serverBind : (server, string, Credentials.t) => unit = "bind";
 
     [@bs.send]
     external start : server => unit = "start";
+
+    /** Convenience function to instantiate and configure a GRPC server */
+    let make = (listenAddress, serverCredentials, serviceImplementations) => {
+      let server = newServer();
+      serverBind(server, listenAddress, serverCredentials);
+      addServices(server, serviceImplementations);
+      start(server);
+      server;
+    };
   };
 
   module Client {
@@ -137,15 +146,6 @@ const boilerPlate = `
    */
   [@bs.val] [@bs.module "fs"]
   external loadCert : string => buffer = "readFileSync";
-
-  /** Convenience function to instantiate and conifgure a GRPC server */
-  let createServer = (listenAddress, serverCredentials, serviceImplementations) => {
-    let server = Server.make();
-    Server.serverBind(server, listenAddress, serverCredentials);
-    addServices(server, serviceImplementations);
-    Server.start(server);
-    server;
-  };
 
   /** Concenience function for simplifying server replies */
   let reply = (callback, x) =>

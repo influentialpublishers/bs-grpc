@@ -6,7 +6,7 @@ let credentials = Grpc.Server.Credentials.Ssl.make(
 );
 
 let server =
-  Grpc.createServer(
+  Grpc.Server.make(
     "127.0.0.1:12345",
     credentials,
     {
