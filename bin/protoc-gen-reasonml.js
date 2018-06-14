@@ -69,12 +69,13 @@ const boilerPlate = `
         [@bs.send]
         external make : (serverCredentialsConstructor, buffer, array(ServerKeyAndCert.t), bool) => t = "createSsl";
         let make = (
-          rootCACert: buffer,
-          privateKey: buffer,
-          certChain: buffer) => make(
+          ~rootCert: buffer,
+          ~privateKey: buffer,
+          ~certChain: buffer) => make(
             grpcCredentials,
-            rootCACert,
+            rootCert,
             [|ServerKeyAndCert.t(~privateKey, ~certChain)|],
+            true
           );
       };
       module Insecure {
