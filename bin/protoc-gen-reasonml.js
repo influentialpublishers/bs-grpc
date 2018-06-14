@@ -41,40 +41,54 @@ const boilerPlate = `
   };
 
   module Server {
-    /* grpc.ServerCredential is a private constructor function. We type it
-     * here so that we can access the two public static constructor
-     * functions createSsl and createInsecure. The consumer should never
-     * have to deal with this type.
-     *
-     * We treat this type as opaque and bind its function props using
-     * bs.send
-     *
-     * The consumer should not need to deal with this type.
-     */
-    type serverCredentialsConstructor;
-    /* Type for a grpc.Server object */
-    /* XXX TODO remove type server; */
+    module Credentials = {
+      /* grpc.ServerCredential is a private constructor function. We type it
+       * here so that we can access the two public static constructor
+       * functions createSsl and createInsecure. The consumer should never
+       * have to deal with this type.
+       *
+       * We treat this type as opaque and bind its function props using
+       * bs.send
+       *
+       * The consumer should not need to deal with this type.
+       */
+      type serverCredentialsConstructor;
+      /* Type for a grpc.Server object */
+      /* XXX TODO remove type server; */
 
-    /* credentials is opaque. a credentials value is needed to
-     * start a server
-     */
-    type credentials;
-    [@bs.module "grpc"][@bs.val] external grpcCredentials : serverCredentialsConstructor = "ServerCredentials";
+      /* credentials is opaque. a credentials value is needed to
+       * start a server
+       */
+      type t;
+      [@bs.module "grpc"][@bs.val] external grpcCredentials : serverCredentialsConstructor = "ServerCredentials";
 
-    /* These are the public static constructor functions for
-     * grpc.ServerCredentials
-     */
-    [@bs.send]
-    external createSsl : (serverCredentialsConstructor, buffer, array(ServerKeyAndCert.t), bool) => credentials = "";
-    [@bs.send]
-    external createInsecure : serverCredentialsConstructor => credentials = "";
-    let createInsecure = () => grpcCredentials |. createInsecure;
+      /* These are the public static constructor functions for
+       * grpc.ServerCredentials
+       */
+      module Ssl = {
+        [@bs.send]
+        external make : (serverCredentialsConstructor, buffer, array(ServerKeyAndCert.t), bool) => t = "createSsl";
+        let make = (
+          rootCACert: buffer,
+          privateKey: buffer,
+          certChain: buffer) => make(
+            grpcCredentials,
+            rootCACert,
+            [|ServerKeyAndCert.t(~privateKey, ~certChain)|],
+          );
+      };
+      module Insecure {
+        [@bs.send]
+        external make : serverCredentialsConstructor => t = "createInsecure";
+        let make = () => grpcCredentials |. make;
+      }
+    };
 
     [@bs.module "grpc"][@bs.new]
     external make : unit => server = "Server";
 
     [@bs.send]
-    external serverBind : (server, string, credentials) => unit = "bind";
+    external serverBind : (server, string, Credentials.t) => unit = "bind";
 
     [@bs.send]
     external start : server => unit = "start";
@@ -108,10 +122,12 @@ const boilerPlate = `
 
   /* we type and obtain a reference to the grpc module so that we can
    * access its properties
+   *
+   * TODO this can probably be removed
    */
   [@bs.deriving abstract]
   type grpcModule = {
-    [@bs.as "ServerCredentials"] serverCredentials : Server.serverCredentialsConstructor,
+    [@bs.as "ServerCredentials"] serverCredentials : Server.Credentials.serverCredentialsConstructor,
   };
   [@bs.module] external grpc : grpcModule = "";
 
@@ -121,28 +137,23 @@ const boilerPlate = `
   [@bs.val] [@bs.module "fs"]
   external loadCert : string => buffer = "readFileSync";
 
-  /* Consumer interfaces */
-  let createSslCredentials = (rootCACert:buffer, privateKey:buffer, certChain:buffer) => Server.(
-      grpcCredentials |. createSsl(rootCACert, [| ServerKeyAndCert.t( ~privateKey=privateKey, ~certChain=certChain ) |])
-  );
+  /** Convenience function to instantiate and conifgure a GRPC server */
+  let createServer = (listenAddress, serverCredentials, serviceImplementations) => {
+    let server = Server.make();
+    Server.serverBind(server, listenAddress, serverCredentials);
+    addServices(server, serviceImplementations);
+    Server.start(server);
+    server;
+  };
 
-/** Convenience function to instantiate and conifgure a GRPC server */
-let createServer = (listenAddress, serverCredentials, serviceImplementations) => {
-  let server = Server.make();
-  Server.serverBind(server, listenAddress, serverCredentials);
-  addServices(server, serviceImplementations);
-  Server.start(server);
-  server;
-};
-
-/** Concenience function for simplifying server replies */
-let reply = (callback, x) =>
-  callback(.
-    Js.Nullable.null,
-    x,
-    Js.Nullable.undefined,
-    Js.Nullable.undefined,
-  );
+  /** Concenience function for simplifying server replies */
+  let reply = (callback, x) =>
+    callback(.
+      Js.Nullable.null,
+      x,
+      Js.Nullable.undefined,
+      Js.Nullable.undefined,
+    );
 `
 
 const dottedModuleName = moduleName =>
