@@ -262,6 +262,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
       fields: messageType.field.map(field => ({
         name: field.name,
         type: field.type,
+        typeName: field.typeName,
         oneofIndex: field.hasOwnProperty('oneofIndex') ? field.oneofIndex : -1
       })),
       oneofs: messageType.oneofDecl.map(oneof => ({
@@ -464,7 +465,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         code += `let make = (\n`
         module.t.fields.forEach(field => {
           if (field.oneofIndex < 0) {
-            code += `~${field.name}\n`
+            code += `~${field.name},\n`
           }
         })
         module.t.oneofs.forEach(oneof => {
