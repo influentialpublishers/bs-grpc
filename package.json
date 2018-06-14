@@ -1,9 +1,10 @@
 {
   "name": "bs-grpc",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "scripts": {
     "clean": "bsb -clean-world",
     "build": "npm run compile-static-protobuf-compiler-protobufs",
+    "format": "bsrefmt --in-place",
     "watch": "bsb -make-world -w",
     "compile-static-protobuf-compiler-protobufs": "./node_modules/.bin/pbjs -t static-module -p node_modules/grpc-tools/bin/google/protobuf node_modules/grpc-tools/bin/google/protobuf/compiler/plugin.proto > src/protobufs.js",
     "compile-static-protobuf-compiler-protobufs-with-extensions": "./node_modules/.bin/pbjs -t static-module -p node_modules/grpc-tools/bin/google/protobuf myplugin.proto > src/protobufs.js",
@@ -12,16 +13,21 @@
   "keywords": [
     "BuckleScript"
   ],
+  "lint-staged": {
+    "*.{re,rei}": [
+      "yarn format",
+      "git add"
+    ]
+  },
+  "bugs": "https://github.com/influentialpublishers/bs-grpc/issues",
+  "homepage": "https://github.com/influentialpublishers/bs-grpc",
+  "repository": "https://github.com/influentialpublishers/bs-grpc.git",
   "author": "\"Don Viszneki\" <dviszneki@influential.co>",
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
     "bs-platform": "^3.1.5",
     "grpc": "^1.11.3",
-    "grpc-tools": "^1.6.6"
-  },
-  "peerDependencies": {
-    "bs-platform": "^3.0.0",
     "grpc-tools": "^1.6.6"
   },
   "dependencies": {
