@@ -134,6 +134,15 @@ let createServer = (listenAddress, serverCredentials, serviceImplementations) =>
   Server.start(server);
   server;
 };
+
+/** Concenience function for simplifying server replies */
+let reply = (callback, x) =>
+  callback(.
+    Js.Nullable.null,
+    x,
+    Js.Nullable.undefined,
+    Js.Nullable.undefined,
+  );
 `
 
 const dottedModuleName = moduleName =>

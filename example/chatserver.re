@@ -24,12 +24,7 @@ let server =
             let ack = Grpc.Chat.MessageAck.make(~result=Grpc.Chat.MessageAck.Message(replyMessage), ());
             Js.log2("ack=", ack);
             Js.log2("callback=", callback);
-            callback(.
-              Js.Nullable.null,
-              ack,
-              Js.Nullable.undefined,
-              Js.Nullable.undefined,
-            );
+            Grpc.reply(callback, ack);
             Js.log("acked");
           }),
         ),
