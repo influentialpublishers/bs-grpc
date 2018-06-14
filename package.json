@@ -15,7 +15,8 @@
   ],
   "author": "\"Don Viszneki\" <dviszneki@influential.co>",
   "bin": {
-    "protoc-gen-reasonml": "bin/protoc-gen-reasonml"
+    "protoc-gen-reasonml": "bin/protoc-gen-reasonml",
+    "reasonml-compile-proto": "bin/reasonml-compile-proto"
   },
   "main": "index.js",
   "license": "MIT",
