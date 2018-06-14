@@ -127,9 +127,9 @@ const boilerPlate = `
   );
 
 /** Convenience function to instantiate and conifgure a GRPC server */
-let createInsecureServer = (listenAddress, serviceImplementations) => {
+let createServer = (listenAddress, serverCredentials, serviceImplementations) => {
   let server = Server.make();
-  Server.serverBind(server, listenAddress, Server.createInsecure());
+  Server.serverBind(server, listenAddress, serverCredentials);
   addServices(server, serviceImplementations);
   Server.start(server);
   server;
@@ -225,7 +225,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
   const reader = pbjs.Reader.create(buf)
   require('fs').writeFileSync('cgr', buf)
   const req = protobufs.google.protobuf.compiler.CodeGeneratorRequest.decode(buf)
-  console.error(util.inspect(req, {depth:999}))
+  //console.error(util.inspect(req, {depth:999}))
 
   // XXX deleting noise garbage i don't want to see
   req.protoFile.forEach(protoFile => delete protoFile.sourceCodeInfo)
