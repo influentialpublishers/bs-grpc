@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /* Why is protobufjs giving me JS Number values to represent protobufs
  * enum values when grpc gives me JS String values?
  *

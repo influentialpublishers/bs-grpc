@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# TODO allow the user to specify the output file path
+
+# Ensure some arguments were supplied
+[ 1 = $(( $# < 1 )) ] && (
+  echo 'error: please specify at least one .proto file' > /dev/stderr
+  exit 1
+)
+
+# Used to resolve relative paths
+MY_DIR="$(dirname "$0")"
+MY_PKG_DIR="$(dirname "$MY_DIR")"
+
+# Directory that contains our generated protobufs codecs needed for our protoc plugin
+MY_SRC_DIR="$MY_PKG_DIR/src"
+
+# The above-mentioned codecs
+PROTOC_CODECS_MODULE="$MY_SRC_DIR/protobufs.js"
+
+# Path to .proto files needed to generate above-mentioned codecs
+GOOGLE_PROTOBUF_PROTOS_DIR="$MY_DIR/node_modules/grpc-tools/bin/google/protobuf"
+
+# Path to entry point need to generate above-mentioned codecs
+PLUGIN_PROTO="$MY_PKG_DIR/node_modules/grpc-tools/bin/google/protobuf/compiler/plugin.proto"
+
+# Path to protoc protobufs compiler provided by grpc-tools
+PROTOC="$MY_PKG_DIR/node_modules/.bin/grpc_tools_node_protoc"
+
+# Make sure MY_SRC_DIR exists
+[ -d "$MY_SRC_DIR" ] || mkdir "$MY_SRC_DIR" || exit 1
+
+# Make sure previously mentioned protobuf codecs exist
+[ -a "$PROTOC_CODECS_MODULE/protobufs.js" ] || \
+  "$MY_PKG_DIR/node_modules/.bin/pbjs" \
+  -t static-module \
+  -p "$GOOGLE_PROTOBUF_PROTOS_DIR" \
+  $PLUGIN_PROTO \
+  > src/protobufs.js
+
+# Invoke protoc
+PATH="$MY_DIR:$PATH" "$PROTOC" $* --reasonml_out=src && bsrefmt --in-place src/Grpc.re
