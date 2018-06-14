@@ -1,16 +1,16 @@
 let lastMessage = ref("out of the silent planet comes a message");
 let server =
-  Protobufs.createServer(
+  Grpc.createServer(
     "127.0.0.1:12345",
-    Protobufs.Server.createInsecure(),
+    Grpc.Server.createInsecure(),
     {
       chatService:
         Some(
-          Protobufs.Chat.ChatService.t(~sendMessage=(call, callback) => {
+          Grpc.Chat.ChatService.t(~sendMessage=(call, callback) => {
             let request = call
-              |> Protobufs.Chat.ChatService.SendMessageRpc.request ;
+              |> Grpc.Chat.ChatService.SendMessageRpc.request ;
             let message = request
-              |> Protobufs.Chat.Message.message ;
+              |> Grpc.Chat.Message.message ;
             let replyMessage = lastMessage^;
             switch (message) {
             | None => ()
@@ -21,7 +21,7 @@ let server =
               message
             );
             /* Send Ack */
-            let ack = Protobufs.Chat.MessageAck.make(~result=Protobufs.Chat.MessageAck.Message(replyMessage), ());
+            let ack = Grpc.Chat.MessageAck.make(~result=Grpc.Chat.MessageAck.Message(replyMessage), ());
             Js.log2("ack=", ack);
             Js.log2("callback=", callback);
             callback(.
