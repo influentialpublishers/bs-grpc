@@ -20,7 +20,7 @@ let server =
               message
             );
             /* Send Ack */
-            let ack = Protobufs.Chat.MessageAck.t(~message=replyMessage, ());
+            let ack = Protobufs.Chat.MessageAck.make(~xResult=Protobufs.Chat.MessageAck.Message(replyMessage), ());
             Js.log2("ack=", ack);
             Js.log2("callback=", callback);
             callback(.

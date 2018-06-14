@@ -4,7 +4,10 @@ message Message {
   string message = 1;
 }
 message MessageAck {
-  string message = 1;
+  oneof result {
+    string message = 1;
+    string error = 2;
+  }
 }
 service ChatService {
   rpc SendMessage (Message) returns (MessageAck) {}
