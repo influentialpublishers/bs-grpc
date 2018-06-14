@@ -626,7 +626,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     process.stdout.write(
       protobufs.google.protobuf.compiler.CodeGeneratorResponse.encode({
         file: [{
-          name: 'protobufs.re',
+          name: 'Grpc.re',
           content: emission
         }]
       }).finish()
