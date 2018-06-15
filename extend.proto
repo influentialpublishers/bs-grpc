@@ -1,0 +1,27 @@
+syntax = "proto3";
+package chat;
+import "google/protobuf/descriptor.proto";
+extend google.protobuf.FileOptions {
+  string hdon_file_option = 1000;
+}
+extend google.protobuf.MessageOptions {
+  string hdon_message_option = 1000;
+}
+extend google.protobuf.FieldOptions {
+  string hdon_field_option = 1000;
+}
+extend google.protobuf.OneofOptions {
+  string hdon_oneof_option = 1000;
+}
+extend google.protobuf.EnumOptions {
+  string hdon_enum_option = 1000;
+}
+extend google.protobuf.EnumValueOptions {
+  string hdon_enum_value_options = 1000;
+}
+extend google.protobuf.ServiceOptions {
+  string hdon_service_option = 1000;
+}
+extend google.protobuf.MethodOptions {
+  string hdon_method_option = 1000;
+}
