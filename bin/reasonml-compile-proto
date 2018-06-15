@@ -3,10 +3,10 @@
 # TODO allow the user to specify the output file path
 
 # Ensure some arguments were supplied
-[ 1 = $(( $# < 1 )) ] && (
+if [ 1 = $(( $# < 1 )) ] ; then
   echo 'error: please specify at least one .proto file' > /dev/stderr
   exit 1
-)
+fi
 
 # Check if we are in someone's "node_modules/.bin" dir or in our own "bin" dir
 if [ "$(basename "$(dirname "$0")")" = ".bin" ] ; then
@@ -25,10 +25,10 @@ PROTOC_CODECS_MODULE="$MY_SRC_DIR/protobufs.js"
 # TODO is there another way to resolve this path?
 SEARCH_DIR="$MY_PKG_DIR"
 while : ; do
-  ( [ "$SEARCH_DIR" = . ] || [ "$SEARCH_DIR" = / ] ) && (
+  if [ "$SEARCH_DIR" = . ] || [ "$SEARCH_DIR" = / ] ; then
     echo "can't find grpc-tools module" 2> /dev/stderr
     exit 1
-  )
+  fi
   GRPC_TOOLS_DIR="$SEARCH_DIR/node_modules/grpc-tools"
   if [ -d "$GRPC_TOOLS_DIR" ] ; then
     break
