@@ -274,7 +274,6 @@ const mapType = (fieldProto, scopeName) => {
 require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
   let protoHandleFields = ''
   const reader = pbjs.Reader.create(buf)
-  require('fs').writeFileSync('cgr', buf)
   const req = protobufs.google.protobuf.compiler.CodeGeneratorRequest.decode(buf)
   //console.error(util.inspect(req, {depth:999}))
 
