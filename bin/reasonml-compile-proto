@@ -21,14 +21,29 @@ MY_SRC_DIR="$MY_PKG_DIR/src"
 # The above-mentioned codecs
 PROTOC_CODECS_MODULE="$MY_SRC_DIR/protobufs.js"
 
+# Path to grpc-tools module
+# TODO is there another way to resolve this path?
+SEARCH_DIR="$MY_PKG_DIR"
+while : ; do
+  ( [ "$SEARCH_DIR" = . ] || [ "$SEARCH_DIR" = / ] ) && (
+    echo "can't find grpc-tools module" 2> /dev/stderr
+    exit 1
+  )
+  GRPC_TOOLS_DIR="$SEARCH_DIR/node_modules/grpc-tools"
+  if [ -d "$GRPC_TOOLS_DIR" ] ; then
+    break
+  fi
+  SEARCH_DIR="$(dirname "$SEARCH_DIR")"
+done
+
 # Path to .proto files needed to generate above-mentioned codecs
-GOOGLE_PROTOBUF_PROTOS_DIR="$MY_PKG_DIR/node_modules/grpc-tools/bin/google/protobuf"
+GOOGLE_PROTOBUF_PROTOS_DIR="$GRPC_TOOLS_DIR/bin/google/protobuf"
 
 # Path to entry point need to generate above-mentioned codecs
-PLUGIN_PROTO="$MY_PKG_DIR/node_modules/grpc-tools/bin/google/protobuf/compiler/plugin.proto"
+PLUGIN_PROTO="$GRPC_TOOLS_DIR/bin/google/protobuf/compiler/plugin.proto"
 
 # Path to protoc protobufs compiler provided by grpc-tools
-PROTOC="$MY_PKG_DIR/node_modules/.bin/grpc_tools_node_protoc"
+PROTOC="$GRPC_TOOLS_DIR/bin/protoc.js"
 
 # Make sure MY_SRC_DIR exists
 [ -d "$MY_SRC_DIR" ] || mkdir "$MY_SRC_DIR" || exit 1
@@ -42,4 +57,4 @@ PROTOC="$MY_PKG_DIR/node_modules/.bin/grpc_tools_node_protoc"
   > src/protobufs.js
 
 # Invoke protoc
-PATH="$MY_DIR:$PATH" "$PROTOC" $* --reasonml_out=src && bsrefmt --in-place src/Grpc.re
+PATH="$MY_DIR:$PATH" yarn grpc_tools_node_protoc $* --reasonml_out=src && bsrefmt --in-place src/Grpc.re
