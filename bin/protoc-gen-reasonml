@@ -481,7 +481,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     /* emit code for any type contained in our module */
     if ('t' in module) {
       if ('fields' in module.t) {
-        code += "[@bs.deriving abstract] type t = ";
+        code += "/* Message module */\n[@bs.deriving abstract] type t = ";
         if (module.t.fields.length) {
           code += "{\n"
           module.t.fields.forEach(field => {
@@ -581,6 +581,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         const outputType = resolveRelative(rpc.outputType, module.moduleName)
         code += `
           module ${upper1(rpc.name)}Rpc {
+            /* Rpc module */
             [@bs.deriving abstract]
             type call = { request: ${inputType} };
             type t = (
@@ -614,7 +615,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
       /* the deriving abstract record type is chosen because it can be fed
        * directly to grpc-node's grpc.Server#addService method
        */
-      code += '[@bs.deriving abstract]\ntype t = {\n'
+      code += '/* Service implementation type */\n[@bs.deriving abstract]\ntype t = {\n'
       module.rpcs.forEach(rpc => {
         code += `${lower1(rpc.name)}: ${upper1(rpc.name)}Rpc.t,\n`;
       })
