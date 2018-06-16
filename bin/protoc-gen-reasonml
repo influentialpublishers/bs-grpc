@@ -513,7 +513,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
          *
          * TODO hide the abstract constructor function "t"
          */
-        code += `let make = (\n`
+        code += `/* safe message constructor (may replace t()) */\nlet make = (\n`
         module.t.fields.forEach(field => {
           if (field.oneofIndex < 0) {
             code += `~${field.name},\n`
