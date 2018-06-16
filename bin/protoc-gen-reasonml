@@ -258,9 +258,9 @@ const mapJustType = (fieldProto, scopeName) => {
       return 'int'
   }
 }
-const mapType = (fieldProto, scopeName) => {
-  const justType = mapJustType(fieldProto, scopeName)
-  switch (fieldProto.label) {
+const mapType = (field, scopeName) => {
+  const justType = mapJustType(field, scopeName)
+  switch (field.label) {
     default:
     case protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_OPTIONAL:
       return ['[@bs.optional]', justType]
@@ -313,6 +313,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         name: field.name,
         type: field.type,
         typeName: field.typeName,
+        label: field.label,
         oneofIndex: field.hasOwnProperty('oneofIndex') ? field.oneofIndex : -1
       })),
       oneofs: messageType.oneofDecl.map(oneof => ({
