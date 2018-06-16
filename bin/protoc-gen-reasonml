@@ -49,6 +49,9 @@ const boilerPlate = `
   };
 `
 
+// TODO implement pascal case maker
+const makeConstructorName = s => s;
+
 let makeServerModule = (serviceModules) => {
   const servicesArgumentsList = serviceModules.map(serviceModule =>
     `~${lower1(lastDottedPart(serviceModule.moduleName))}=?,\n`
@@ -504,7 +507,9 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           /* variant type for oneof */
           code += `type ${oneof.name} =\n`
           oneof.fields.forEach(field => {
-            code += `| ${upper1(field.name)}(${mapJustType(field, module.moduleName)})\n`
+            const justType = mapJustType(field, module.moduleName)
+            const constructorName = makeConstructorName(justType)
+            code += `| ${upper1(field.name)}(${constructorName})\n`
           })
           code += ';\n'
         })
