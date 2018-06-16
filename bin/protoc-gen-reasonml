@@ -521,7 +521,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         code += `/* safe message constructor (may replace t()) */\nlet make = (\n`
         module.t.fields.forEach(field => {
           if (field.oneofIndex < 0) {
-            code += `~${field.name},\n`
+            code += `~${field.name}=?,\n`
           }
         })
         module.t.oneofs.forEach(oneof => {
