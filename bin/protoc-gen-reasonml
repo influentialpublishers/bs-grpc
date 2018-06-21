@@ -49,6 +49,14 @@ const preBoilerPlate = `
     exception NumberOutOfRangeError;
     exception NumberNotPositiveError;
     exception RegexMatchError;
+    exception TransFieldError(string);
+
+    /* invokes user-supplied function to perform multi-field
+     * validation, if such a function is supplied
+     * TODO move to Validation module */
+    let transFieldError = errMsg => Belt.Result.Error(
+      TransFieldError(errMsg)
+    );
 
     type field('a) =
       | Field(string, Future.t(Belt.Result.t(option('a), exn)));
@@ -166,6 +174,7 @@ const preBoilerPlate = `
       | WrongNumberError => "wrong number"
       | NumberOutOfRangeError => "number ouf ot range"
       | RegexMatchError => "string pattern mismatch"
+      | TransFieldError(s) => "involving multiple fields: " ++ s
       | _ => "unknown error";
 
     let fold = (Field(fieldName, Future.Future(get)), happy, sad) =>
@@ -465,7 +474,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     if('options' in messageType) {
       const options = messageType.options
       if (options !== null && '.tinMessageValidation' in options) {
-        const validationSource = handleMessageValidationOptions(options['.tinMessageValidation'])
+        const validationSource = options['.tinMessageValidation']
         return validationSource
       }
     }
@@ -618,6 +627,34 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
       }
     }
   }
+  function mapObj(o, f) {
+    let r = {}
+    for (let k in o)
+      r[k] = o[k]
+    return r
+  }
+  function objStrJoin(o, j) {
+    let a = false
+    let r = ''
+    for (let k in o) {
+      if (a) r += j
+      r += o[k]
+      a = true
+    }
+    return r
+  }
+  function makeRecordExpression(fieldNames, fieldMapper) {
+    return '({' + fieldNames.map(fieldName => `${fieldName}: ${fieldMapper(fieldName)},\n`) + '})'
+  }
+  function makeNamedArgumentList(fieldNames, fieldMapper) {
+    return fieldNames.map(fieldName => `~${fieldName}=${fieldMapper(fieldName)},\n`)
+  }
+  function makeWholeMessageValidator(messageModule) {
+    const messageType = messageModule.t
+    if (!messageType.validation) {
+      return 'Future.value(' + makeRecordExpression(messageType.fields.map(x=>x.name)) + ')'
+    }
+  }
 
   const emitModule = module => {
     let code = ''
@@ -758,23 +795,41 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
               Future.make(resolve => {
             `
             fieldsToValidate.forEach(field =>
-              code += `let ${field.name} = ref(x |. ${field.name});\n`
+              code += `let ${field.name}Ref = ref(x |. ${field.name});\n`
             )
             code += `
                 let n = ref(${fieldsToValidate.length});
                 let failed = ref(false);
-                /* message is valid; resolve the future we returned */
-                let finalResolution = () => {
-                      resolve(
-                        Belt.Result.Ok(t(
+                /* message is valid; build the normalized message */
+                /* TODO makeMessage is probably vestigial at this point
+                let makeMessage = () => {
+                  Belt.Result.Ok(t(
             `
             fieldsToValidate.forEach(field =>
-              code += `~${field.name}=?${field.name}^,\n`
+              code += `~${field.name}=?${field.name}Ref^,\n`
             )
+                    console.error("LOL", module)
             code += `
-                        ())),
-                      );
+                  ()))
                 };
+                */
+                let wholeMessageValidation =
+            `
+            if (module.t.validation) {
+              code += `
+                  Validation.fieldMap @@
+                  Validation.futureMap @@
+                  Validation.resultOptionFlatMap @@
+                  (x => {
+                      open Validation;
+                      ${module.t.validation}
+                    }
+                  );
+              `
+            } else {
+              code += `x => x;`
+            }
+            code += `
                 let fail = (fieldName, errMsg) => {
                   failed := true;
                   resolve(
@@ -788,7 +843,22 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
                     field := x;
                     n := n^ - 1;
                     if (n^ == 0) {
-                      finalResolution()
+                      make(
+            `
+            module.t.fields.forEach(field => {
+              if (fieldsToValidate.indexOf(field) < 0) {
+                code += `~${field.name} =? x |. ${field.name},\n`
+              } else {
+                code += `~${field.name} =? ${field.name}Ref^,\n`
+              }
+            })
+            code += `
+                      ())
+                      |> (x=>Some(x))
+                      |> Validation.value(${quote(lastDottedPart(module.moduleName))})
+                      |> wholeMessageValidation
+                      |> Validation.required
+                      |. Validation.fold(opt => resolve(Belt.Result.Ok(Belt.Option.getExn(opt))), fail);
                     }
                   }
                 };
@@ -797,10 +867,10 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           module.t.fields.forEach(field => {
             if (field.validation != null) {
               code += `/* field validation */
-                ${field.name}^
+                ${field.name}Ref^
                 |> value(${quote(field.name)})
                 |> ${field.validation}
-                |. fold(tick(${field.name}), fail)
+                |. fold(tick(${field.name}Ref), fail)
                 |. ignore;
               `
             }
