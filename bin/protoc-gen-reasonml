@@ -41,84 +41,140 @@ const preBoilerPlate = `
     exception MissingFieldError;
     exception StringTooLongError;
     exception StringTooShortError;
-    exception NumberNotPositiveError;
     exception ArrayTooShortError;
+    exception FractionalNumberError;
+    exception WrongStringError;
+    exception UnimplementedError;
+    exception WrongNumberError;
+    exception NumberOutOfRangeError;
+    exception NumberNotPositiveError;
+    exception RegexMatchError;
 
-    type field('a) = Field(string, Future.t(Belt.Result.t(option('a), exn)));
+    type field('a) =
+      | Field(string, Future.t(Belt.Result.t(option('a), exn)));
     let fieldMap = (f, Field(fieldName, x)) => Field(fieldName, f(x));
-    let futureMap = (a,b) => Future.map(b,a);
-    let value = (fieldName, x) => Field(fieldName, Future.value(Belt.Result.Ok(x)));
-    /*let required = fieldGetter => x => Future.flatMap(x => Belt.Result.flatMap(x => x |. fieldGetter |. Belt.Option.flatMap(x => x |. fieldGetter*/
+    let futureMap = (a, b) => Future.map(b, a);
+    let resultMap = (a, b) => Belt.Result.map(b, a);
+    let resultFlatMap = (a, b) => Belt.Result.flatMap(b, a);
+    let optionMap = (a, b) => Belt.Option.map(b, a);
+    let optionFlatMap = (a, b) => Belt.Option.flatMap(b, a);
+    let resultOptionFlatMap = f => fun
+    | Belt.Result.Ok(Some(x)) => f(x)
+    | x => x
+    ;
+    let okSome = x => Belt.Result.Ok(Some(x));
+    let error = e => Belt.Result.Error(e);
+
+    let value = (fieldName, x) =>
+      Field(fieldName, Future.value(Belt.Result.Ok(x)));
+    let numberRange = (lo, hi) =>
+      fieldMap @@ futureMap @@ resultOptionFlatMap @@ (x => 
+          lo <= x && x <= hi ? okSome(x) : error(NumberOutOfRangeError)
+      );
+    let maxNumber = numberRange(Js.Int.min);
+    let minNumber = n => numberRange(n, Js.Int.max);
+    /* TODO can isEqualNumber and isEqualString be merged? */
+    let isEqualNumber = n =>
+      fieldMap @@ futureMap @@ resultOptionFlatMap @@ (x =>
+          x == n ?  okSome(x) : error(WrongNumberError)
+      );
+    let isEqualString = s =>
+      fieldMap @@ futureMap @@ resultOptionFlatMap @@ (x =>
+                                     x == s ? okSome(x) : error(WrongStringError)
+      );
+    let isInt =
+      fieldMap @@ futureMap @@ resultOptionFlatMap @@ (x =>
+          Js.Math.trunc(x) == x ?
+            okSome(x) : error(FractionalNumberError)
+      );
+    /* TODO can notEqualNumber and notEqualString be merged? */
+    let notEqualNumber = n =>
+      fieldMap @@ futureMap @@ resultOptionFlatMap @@ (x =>
+          x != n ?
+            okSome(x) : error(WrongNumberError)
+      );
+    let notEqualString = s =>
+      fieldMap @@ futureMap @@ resultOptionFlatMap @@ (x =>
+          s == x ?
+            okSome(x) : error(WrongStringError)
+      );
+    /* TODO is this in the stdlib? */
+    [@bs.new] external newRegExp : string => Js.Re.t = "RegExp";
+    let matchRegex = re => {
+      let re = newRegExp(re);
+      fieldMap @@ futureMap @@ resultOptionFlatMap @@ (x =>
+        x |. Js.Re.test(re) ? okSome(x) : error(RegexMatchError)
+      );
+    };
     let required = x =>
       x
-      |> fieldMap @@ futureMap(
-           fun
-           | Belt.Result.Ok(None) => Belt.Result.Error(MissingFieldError)
-           | x => x,
-         );
-    let maxStrLen = (len, x) =>
-      x
-      |> fieldMap @@ futureMap(
-           fun
-           | Belt.Result.Ok(Some(x)) =>
-             x |. String.length <= len ?
-               Belt.Result.Ok(Some(x)) : Belt.Result.Error(StringTooLongError)
-           | x => x,
-         );
-    let minStrLen = (len, x) =>
-      x
-      |> fieldMap @@ futureMap(
-           fun
-           | Belt.Result.Ok(Some(x)) =>
-             x |. String.length >= len ?
-               Belt.Result.Ok(Some(x)) : Belt.Result.Error(StringTooShortError)
-           | x => x,
-         );
+      |> fieldMap @@
+      futureMap(
+        fun
+        | Belt.Result.Ok(None) => error(MissingFieldError)
+        | x => x,
+      );
+    let maxStrLen = len =>
+      fieldMap @@ futureMap @@ resultOptionFlatMap @@ (x =>
+          x |. String.length <= len ?
+            okSome(x) : error(StringTooLongError)
+      );
+    let minStrLen = len =>
+      fieldMap @@ futureMap @@ resultOptionFlatMap @@ (x =>
+          x |. String.length >= len ?
+            okSome(x) : error(StringTooShortError)
+      );
     let nonEmptyString = minStrLen(1);
-    let trimString = x =>
-      x
-      |> fieldMap @@ futureMap(
-           fun
-           | Belt.Result.Ok(Some(x)) =>
-             Belt.Result.Ok(Some(x |. Js.String.trim))
-           | x => x,
-         );
-    let positive = (x:field(int)) =>
-      x
-      |> fieldMap @@ futureMap(
-           fun
-           | Belt.Result.Ok(Some(x)) =>
-             x > 0 ?
-               Belt.Result.Ok(Some(x)) :
-               Belt.Result.Error(NumberNotPositiveError)
-           | x => x,
-         );
-    let minItemCount = (len, x:field(array('a))) => x |> fieldMap @@ futureMap(fun
-    | Belt.Result.Ok(Some(x)) => x |. Array.length < len ? Belt.Result.Error(ArrayTooShortError) : Belt.Result.Ok(Some(x))
-    | x => x
-    );
-    let maxItemCount = (len, x:field(array('a))) => x |> fieldMap @@ futureMap(fun
-    | Belt.Result.Ok(Some(x)) => x |. Array.length > len ? Belt.Result.Error(ArrayTooShortError) : Belt.Result.Ok(Some(x))
-    | x => x
-    );
+    let trimString =
+      fieldMap @@ futureMap @@ resultMap @@ optionMap @@ Js.String.trim;
 
-    let err2msg = fun
+    /* TODO implement in terms of previous validators */
+    let positive = minNumber(1);
+    /* Is US Employer Identification Numebr? */
+    /* let isUSEIN */
+    let minItemCount = (len, x: field(array('a))) =>
+      x
+      |> fieldMap @@
+      futureMap(
+        fun
+        | Belt.Result.Ok(Some(x)) =>
+          x |. Array.length < len ?
+            Belt.Result.Error(ArrayTooShortError) : Belt.Result.Ok(Some(x))
+        | x => x,
+      );
+    let maxItemCount = (len, x: field(array('a))) =>
+      x
+      |> fieldMap @@
+      futureMap(
+        fun
+        | Belt.Result.Ok(Some(x)) =>
+          x |. Array.length > len ?
+            Belt.Result.Error(ArrayTooShortError) : Belt.Result.Ok(Some(x))
+        | x => x,
+      );
+
+    let err2msg =
+      fun
       | MissingFieldError => "required field missing"
       | StringTooLongError => "string value too long"
       | StringTooShortError => "string value too short"
       | NumberNotPositiveError => "number value non-positive"
       | ArrayTooShortError => "not enough items"
-      | _ => "unknown error"
-      ;
+      | FractionalNumberError => "number is fractional"
+      | WrongStringError => "string mismatch"
+      | UnimplementedError => "unimplemented validation"
+      | WrongNumberError => "wrong number"
+      | NumberOutOfRangeError => "number ouf ot range"
+      | RegexMatchError => "string pattern mismatch"
+      | _ => "unknown error";
 
     let fold = (Field(fieldName, Future.Future(get)), happy, sad) =>
-        get(x =>
-          switch (x) {
-          | Belt.Result.Ok(x) => happy(x)
-          | Belt.Result.Error(err) => err |> err2msg |> sad(fieldName)
-          }
-        )
-      ;
+      get(x =>
+        switch (x) {
+        | Belt.Result.Ok(x) => happy(x)
+        | Belt.Result.Error(err) => err |> err2msg |> sad(fieldName)
+        }
+      );
   };
 
   /** a type that cannot be instantiated */
