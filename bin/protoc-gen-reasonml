@@ -763,12 +763,14 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
             code += `
                 let n = ref(${fieldsToValidate.length});
                 let failed = ref(false);
-                let fail = (fieldName, errMsg) =>
+                let fail = (fieldName, errMsg) => {
+                  failed := true;
                   resolve(
                     Belt.Result.Error(
                       {j|error validating field $fieldName: $errMsg|j},
                     ),
-                  );
+                  )
+                };
                 let tick = (field, x) => {
                   if (!failed^) {
                     field := x;
