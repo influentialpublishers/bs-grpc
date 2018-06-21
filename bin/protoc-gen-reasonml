@@ -762,6 +762,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
             )
             code += `
                 let n = ref(${fieldsToValidate.length});
+                let failed = ref(false);
                 let fail = (fieldName, errMsg) =>
                   resolve(
                     Belt.Result.Error(
@@ -769,19 +770,21 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
                     ),
                   );
                 let tick = (field, x) => {
-                  field := x;
-                  n := n^ - 1;
-                  if (n^ == 0) {
-                    resolve(
-                      Belt.Result.Ok(t(
+                  if (!failed^) {
+                    field := x;
+                    n := n^ - 1;
+                    if (n^ == 0) {
+                      resolve(
+                        Belt.Result.Ok(t(
             `
             fieldsToValidate.forEach(field =>
               code += `~${field.name}=?${field.name}^,\n`
             )
             code += `
-                      ())),
-                    );
-                  };
+                        ())),
+                      );
+                    }
+                  }
                 };
                 open Validation;
           `
