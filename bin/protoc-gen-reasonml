@@ -460,6 +460,17 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     }
   }
 
+  function handleMessageValidationOptions(messageType) {
+    /* check for validation criteria */
+    if('options' in messageType) {
+      const options = messageType.options
+      if (options !== null && '.tinMessageValidation' in options) {
+        const validationSource = handleMessageValidationOptions(options['.tinMessageValidation'])
+        return validationSource
+      }
+    }
+  }
+
   function handleMessageType(parentModule, messageType) {
     /* Create module for this message type */
     const moduleName = dottedModuleName(joinModuleName(parentModule.moduleName, messageType.name))
@@ -480,7 +491,8 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
       oneofs: messageType.oneofDecl.map(oneof => ({
         name: oneof.name,
         fields: []
-      }))
+      })),
+      validation: handleMessageValidationOptions(messageType),
     }
     messageType.field.forEach((field, iField) => {
       if (field.hasOwnProperty('oneofIndex')) {
