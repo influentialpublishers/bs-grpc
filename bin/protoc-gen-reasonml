@@ -623,10 +623,8 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     }
   }, [])
   const dependencySortedModuleNames = toposort(dependencies).slice(1)
-  console.error('dependencySortedModuleNames', dependencySortedModuleNames)
 
   const emitModule = module => {
-    //console.error('module=', util.inspect(module, {depth:99}))
     let code = ''
     /* diagnostic output */
     code += `/* fileName = "${module.fileName}" */\n`
@@ -645,13 +643,11 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
       `
     }
     /* sort sub-modules by order of dependency */
-    //console.error("hahaha=", Object.keys(module.modules))
     const subModuleOrder = Object.keys(module.modules).map(moduleName => ({
       moduleName,
       position: dependencySortedModuleNames.indexOf(moduleName)
     }))
     subModuleOrder.sort((a,b) => a.position-b.position)
-    console.error('subModuleOrder=', subModuleOrder)
     /* emit code for each sub-module in order */
     subModuleOrder.forEach(subModulePosition => {
       const localModuleName = lastDottedPart(subModulePosition.moduleName)
@@ -778,7 +774,6 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
             fieldsToValidate.forEach(field =>
               code += `~${field.name}=?${field.name}Ref^,\n`
             )
-                    //console.error("LOL", module)
             code += `
                   ()))
                 };
@@ -934,7 +929,6 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         `
       })
       code += `)\n`;
-      console.error(module.rpcs)
     }
     if (module === rootModule) {
       const services = identifyServices()
