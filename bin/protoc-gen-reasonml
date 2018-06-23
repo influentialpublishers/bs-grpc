@@ -9,6 +9,7 @@ const protobufs = require('../src/protobufs')
 const Path = require('path')
 const fs = require('fs')
 const util = require('util')
+const toposort = require('toposort')
 
 const quote = s => {
   if ('string' !== typeof s)
@@ -583,6 +584,16 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     }
     return foundModules;
   }
+  function identifyModulesArray() {
+    const foundModules = []
+    recurse(rootModule)
+    function recurse(module) {
+      foundModules.push(module)
+      for (let moduleName in module.modules)
+        recurse(module.modules[moduleName])
+    }
+    return foundModules;
+  }
   function identifyServices() {
     const foundServices = {}
     recurse(rootModule)
@@ -597,71 +608,29 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     }
     return foundServices
   }
-  function analyzeGraph() {
-    const modules = identifyModules();
-    for (let moduleName in modules) {
-      modules[moduleName].dependencies = {}
-      modules[moduleName].visiting = false
-    }
-    function recurse(module) {
-      calcDependencies(module)
-      for (let subModuleName in module.modules) {
-        recurse(module.modules[subModuleName])
-      }
-    }
-    for (let moduleName in modules)
-      recurse(modules[moduleName], 0)
-  }
-  analyzeGraph()
-  /* this is a little sloppy but gets us what we need */
-  function calcDependencies(module) {
-    module.dependencies = {}
+  const dependencies = []
+  identifyModulesArray().forEach(module => {
+    dependencies.push(['*start*', module.moduleName])
     if ('t' in module) {
       if ('fields' in module.t) {
         module.t.fields.forEach(field => {
           if (field.type == protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_ENUM
             || field.type == protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_MESSAGE) {
-            module.dependencies[firstPart(resolveRelative(mapMessageType(field.typeName), module.moduleName))] = true
+            dependencies.push([module.moduleName, mapMessageType(field.typeName)])
           }
         })
       }
     }
-  }
-  function mapObj(o, f) {
-    let r = {}
-    for (let k in o)
-      r[k] = o[k]
-    return r
-  }
-  function objStrJoin(o, j) {
-    let a = false
-    let r = ''
-    for (let k in o) {
-      if (a) r += j
-      r += o[k]
-      a = true
-    }
-    return r
-  }
-  function makeRecordExpression(fieldNames, fieldMapper) {
-    return '({' + fieldNames.map(fieldName => `${fieldName}: ${fieldMapper(fieldName)},\n`) + '})'
-  }
-  function makeNamedArgumentList(fieldNames, fieldMapper) {
-    return fieldNames.map(fieldName => `~${fieldName}=${fieldMapper(fieldName)},\n`)
-  }
-  function makeWholeMessageValidator(messageModule) {
-    const messageType = messageModule.t
-    if (!messageType.validation) {
-      return 'Future.value(' + makeRecordExpression(messageType.fields.map(x=>x.name)) + ')'
-    }
-  }
+  }, [])
+  const dependencySortedModuleNames = toposort(dependencies).slice(1)
+  console.error('dependencySortedModuleNames', dependencySortedModuleNames)
 
   const emitModule = module => {
+    //console.error('module=', util.inspect(module, {depth:99}))
     let code = ''
     /* diagnostic output */
     code += `/* fileName = "${module.fileName}" */\n`
     code += `/* moduleName = "${module.moduleName}" */\n`
-    code += `/* dependencies = "${Object.keys(module.dependencies).join('", "')}" */\n`
     /* Invoke grpc-node's load() method to generate and load javascript
      * bindings to our .proto
      */
@@ -675,18 +644,19 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         let myProtoHandle = grpcLoadProto(${JSON.stringify(module.fileName)}) |> getProtoHandle;
       `
     }
-    /* sort sub-modules by dependency */
-    const subModuleNames = Object.keys(module.modules)
-    sortish(subModuleNames, (a,b) => {
-      const ma = module.modules[a]
-      const mb = module.modules[b]
-      return a in mb.dependencies ? 1 : b in ma.dependencies ? -1 : 0
-    })
-    subModuleNames.sort((a,b) => module.modules[a].score-module.modules[b].score)
+    /* sort sub-modules by order of dependency */
+    //console.error("hahaha=", Object.keys(module.modules))
+    const subModuleOrder = Object.keys(module.modules).map(moduleName => ({
+      moduleName,
+      position: dependencySortedModuleNames.indexOf(moduleName)
+    }))
+    subModuleOrder.sort((a,b) => a.position-b.position)
+    console.error('subModuleOrder=', subModuleOrder)
     /* emit code for each sub-module in order */
-    subModuleNames.forEach(subModuleName => {
-      code += `module ${subModuleName} {\n`
-      code += emitModule(module.modules[subModuleName])
+    subModuleOrder.forEach(subModulePosition => {
+      const localModuleName = lastDottedPart(subModulePosition.moduleName)
+      code += `module ${localModuleName} {\n`
+      code += emitModule(module.modules[subModulePosition.moduleName])
       code += `};\n`
     })
     /* emit code for any type contained in our module */
@@ -808,7 +778,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
             fieldsToValidate.forEach(field =>
               code += `~${field.name}=?${field.name}Ref^,\n`
             )
-                    console.error("LOL", module)
+                    //console.error("LOL", module)
             code += `
                   ()))
                 };
