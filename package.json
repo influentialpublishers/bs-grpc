@@ -1,6 +1,6 @@
 {
   "name": "bs-grpc",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "scripts": {
     "clean": "bsb -clean-world",
     "build": "npm run compile-static-protobuf-compiler-protobufs",
@@ -38,8 +38,8 @@
   },
   "files": [
     "bin/protoc-gen-reasonml",
-		"bin/reasonml-compile-proto",
-		"bsconfig.json",
-		"extend.proto"
+    "bin/reasonml-compile-proto",
+    "bsconfig.json",
+    "extend.proto"
   ]
 }
