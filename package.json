@@ -35,5 +35,11 @@
     "read-all-stream": "^3.1.0",
     "reason-future": "^2.2.1",
     "toposort": "^2.0.2"
-  }
+  },
+  "files": [
+    "bin/protoc-gen-reasonml",
+		"bin/reasonml-compile-proto",
+		"bsconfig.json",
+		"extend.proto"
+  ]
 }
