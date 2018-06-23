@@ -40,6 +40,7 @@
     "bin/protoc-gen-reasonml",
     "bin/reasonml-compile-proto",
     "bsconfig.json",
-    "extend.proto"
+    "extend.proto",
+		"src/protobufs.js"
   ]
 }
