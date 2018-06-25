@@ -635,9 +635,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
       })
     }
   }, [])
-  console.error(dependencies)
   const dependencySortedModuleNames = toposort(dependencies).slice(1)
-  console.error(dependencySortedModuleNames)
 
   const emitModule = module => {
     let code = ''
@@ -666,7 +664,6 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
       }
     })
     subModuleOrder.sort((a,b) => a.position-b.position)
-    console.error('sorted:', subModuleOrder)
     /* emit code for each sub-module in order */
     subModuleOrder.forEach(subModulePosition => {
       const shortModuleName = subModulePosition.shortModuleName
