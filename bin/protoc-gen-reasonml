@@ -76,6 +76,20 @@ const preBoilerPlate = `
 
     let value = (fieldName, x) =>
       Field(fieldName, Future.value(Belt.Result.Ok(x)));
+    let fieldValidatorOfMessageValidator = (f, Field(name, future)) =>
+      future
+      |. Future.flatMapOk(x =>
+           switch (x) {
+           | None => None |. Belt.Result.Ok |. Future.value
+           | Some(thing) =>
+             f(thing)
+             |. Future.mapError(str => str |. TransFieldError)
+             |. Future.mapOk(x => Some(x))
+           }
+         )
+      |. (fresult => Field(name, fresult));
+
+
     let numberRange = (lo, hi) =>
       fieldMap @@ futureMap @@ resultOptionFlatMap @@ (x => 
           lo <= x && x <= hi ? okSome(x) : error(NumberOutOfRangeError)
@@ -764,7 +778,10 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           );
           `
         })
-        const fieldsToValidate = module.t.fields.filter(field => field.validation)
+        const fieldsToValidate = module.t.fields.filter(field =>
+          field.validation ||
+          field.type == protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_MESSAGE
+        )
         if (fieldsToValidate.length == 0) {
           code += `
             /* no validation specified for this message */
@@ -819,12 +836,12 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
                     ),
                   )
                 };
-                let tick = (field, x) => {
+                let tick = (field, y) => {
                   if (!failed^) {
-                    field := x;
+                    field := y;
                     n := n^ - 1;
                     if (n^ == 0) {
-                      make(
+                      t(
             `
             module.t.fields.forEach(field => {
               if (fieldsToValidate.indexOf(field) < 0) {
@@ -851,6 +868,14 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
                 ${field.name}Ref^
                 |> value(${quote(field.name)})
                 |> ${field.validation}
+                |. fold(tick(${field.name}Ref), fail)
+                |. ignore;
+              `
+            } else if (field.type == protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_MESSAGE) {
+              code += `/* message field validation */
+                ${field.name}Ref^
+                |> value(${quote(field.name)})
+                |> fieldValidatorOfMessageValidator @@ ${moduleDirName(mapJustType(field, module.moduleName))}.validate
                 |. fold(tick(${field.name}Ref), fail)
                 |. ignore;
               `
