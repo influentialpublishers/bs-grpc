@@ -104,7 +104,7 @@ const preBoilerPlate = `
     type field('a) =
       | Field(string, Future.t(Belt.Result.t(option('a), exn)));
     let fieldMap = (f, Field(fieldName, x)) => Field(fieldName, f(x));
-    let fieldGet = (Field(fieldName, x)) => x;
+    let fieldGet = (Field(_, x)) => x;
     let futureMap = (a, b) => Future.map(b, a);
     let futureFlatMap = (a, b) => Future.map(b, a);
     let resultMap = (a, b) => Belt.Result.map(b, a);
