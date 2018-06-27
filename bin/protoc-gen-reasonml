@@ -22,7 +22,49 @@ const preBoilerPlate = `
   exception BsGrpcDecoderError(string);
   exception ImpossibleError(string);
 
-  /* utility function; TODO is there a stdlib answer? */
+  /* flatMap an array of Futures */
+  let futureFlatMapArray =
+      (f: 'a => Future.t('b), maxConcurrent, xs: array('a)) =>
+    Future.(
+      make(resolve => {
+        let result: array(option('b)) =
+          xs |. Array.length |. Belt.Array.make(None);
+        let xlen = Array.length(xs);
+        let numJobs = ref(0);
+        let cursor = ref(0);
+        let rec pump = () => {
+          if (cursor^ == xlen) {
+            if (numJobs^ == 0) {
+              result |> Array.map(Belt.Option.getExn) |. resolve;
+            };
+          } else {
+            let i = cursor^;
+            cursor := cursor^ + 1;
+            numJobs := numJobs^ + 1;
+            xs[i]
+            |. f
+            |. get(x => {
+                 result[i] = Some(x);
+                 numJobs := numJobs^ - 1;
+                 pump();
+               });
+          };
+          ();
+        };
+        for (_ in 1 to min(maxConcurrent, xlen)) {
+          pump();
+        };
+        ();
+      })
+    );
+
+  /** return Some(x) for the first x of an array for which predictate f
+   returns true, starting from element at index n, or None if no such element is
+   found */
+  let rec arrayFirst = (f, n, a) =>
+    n < Array.length(a) ? f(a[n]) ? Some(a[n]) : arrayFirst(f, n + 1, a) : None;
+
+  /* utility eunction; TODO is there a stdlib answer? */
   let optCall = (x, ~f) =>
     switch (x) {
     | None => ()
@@ -62,7 +104,9 @@ const preBoilerPlate = `
     type field('a) =
       | Field(string, Future.t(Belt.Result.t(option('a), exn)));
     let fieldMap = (f, Field(fieldName, x)) => Field(fieldName, f(x));
+    let fieldGet = (Field(fieldName, x)) => x;
     let futureMap = (a, b) => Future.map(b, a);
+    let futureFlatMap = (a, b) => Future.map(b, a);
     let resultMap = (a, b) => Belt.Result.map(b, a);
     let resultFlatMap = (a, b) => Belt.Result.flatMap(b, a);
     let optionMap = (a, b) => Belt.Option.map(b, a);
@@ -155,6 +199,41 @@ const preBoilerPlate = `
     let positive = minNumber(1);
     /* Is US Employer Identification Numebr? */
     /* let isUSEIN */
+    let repeated:
+    (field('a) => field('a), field(array('a))) => field(array('a)) =
+    (f, Field(fieldName, future)) => {
+      let foo = x =>
+        switch (x) {
+        | None => None |. Belt.Result.Ok |. Future.value
+        | Some(thing) =>
+          let bar =
+            thing
+            |> futureFlatMapArray(
+                 x =>
+                   Field(fieldName, Future.value(Belt.Result.Ok(Some(x))))
+                   |> f
+                   |> fieldGet
+                   |. Future.mapOk(Belt.Option.getExn),
+                 0x7fffffff,
+               );
+
+          bar
+          |. Future.map(
+               (x: array(Belt.Result.t('a, exn))) => {
+               let firstError = arrayFirst(Belt.Result.isError, 0, x);
+               switch (firstError) {
+               | Some(Belt.Result.Error(x)) => Belt.Result.Error(x)
+               | None => Belt.Result.Ok(Array.map(Belt.Result.getExn, x))
+               | Some(Belt.Result.Ok(_)) =>
+                 raise(ImpossibleError("found unfound element"))
+               };
+             })
+          |. Future.mapOk(x => Some(x));
+        };
+      let future = Future.flatMapOk(future, foo);
+      Field(fieldName, future);
+    };
+
     let minItemCount = (len, x: field(array('a))) =>
       x
       |> fieldMap @@
