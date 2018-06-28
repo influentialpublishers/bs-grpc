@@ -951,10 +951,14 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
                 |. ignore;
               `
             } else if (field.type == protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_MESSAGE) {
+              let validationCode =
+                `fieldValidatorOfMessageValidator @@ ${moduleDirName(mapJustType(field, module.moduleName))}.validate`
+              if (field.label == protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_REPEATED)
+                validationCode = `repeated(${validationCode})`
               code += `/* message field validation */
                 ${field.name}Ref^
                 |> value(${quote(field.name)})
-                |> fieldValidatorOfMessageValidator @@ ${moduleDirName(mapJustType(field, module.moduleName))}.validate
+                |> ${validationCode}
                 |. fold(tick(${field.name}Ref), fail)
                 |. ignore;
               `
