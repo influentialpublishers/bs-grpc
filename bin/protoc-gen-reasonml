@@ -634,6 +634,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     const protoFileModule = {
       modules: {},
       moduleName: protoFileModuleName,
+      packageName: protoFile.package,
       fileName: protoFile.name,
     }
     rootModule.modules[lastDottedPart(protoFileModuleName)] = protoFileModule
@@ -744,7 +745,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
        */
       code += `
         type grpcProtoHandle;
-        [@bs.get] external getProtoHandle : grpcLoadResult => grpcProtoHandle = "chat";
+        [@bs.get] external getProtoHandle : grpcLoadResult => grpcProtoHandle = "${module.packageName}";
         let myProtoHandle = grpcLoadProto(${JSON.stringify(module.fileName)}) |> getProtoHandle;
       `
     }
