@@ -970,7 +970,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           `
         }
       } else if ('enumValues' in module.t) {
-        code += 'type t =\n';
+        code += '/* enum type */ type t =\n';
         module.t.enumValues.forEach(enumValue => {
           code += `| ${enumValue.name}\n`
         })
