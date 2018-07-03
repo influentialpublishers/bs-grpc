@@ -500,16 +500,18 @@ const mapJustType = (fieldProto, scopeName) => {
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_FLOAT:
       return 'float'
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_FIXED32:
-    case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_FIXED64:
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_INT32:
-    case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_INT64:
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_SFIXED32:
-    case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_SFIXED64:
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_SINT32:
-    case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_SINT64:
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_UINT32:
-    case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_UINT64:
       return 'int'
+    /* TODO in the future we'll want more flexibility in how we represent 64-bit values */
+    case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_FIXED64:
+    case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_INT64:
+    case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_SFIXED64:
+    case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_SINT64:
+    case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_UINT64:
+      return 'string'
   }
 }
 const mapType = (field, scopeName) => {
@@ -630,7 +632,6 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
   }
 
   function mapEnumValues(values) {
-    console.error(values)
     return values.map(enumValue => ({
       name: enumName(enumValue.name),
       number: enumValue.number
@@ -830,7 +831,6 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           code += '()) => t(\n'
           module.t.fields.forEach(field => {
             if (isEnumField(field)) {
-              console.error('field=', field)
               const enumModuleRef = resolveRelative(mapTypeNameToModuleName(field.typeName), module.moduleName)
               const conv = makeFunNameConvIntOfEnum(enumModuleRef)
               code += `~${lower1(field.name)} =? ${lower1(field.name)} |. Belt.Option.map(${conv}),\n`
