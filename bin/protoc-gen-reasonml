@@ -406,39 +406,60 @@ let makeServerModule = (serviceModules) => {
 
 const boilerPlate2 = `
   module Client {
-    /* grpc.credentials contains functions for producing "ChannelCredentials"
-     * although I cannot identify a way to simply reach the
-     * ChannelCredentials constructor (e.g. grpc.ChannelCredentials)
-     *
-     * We treat this type as opaque and bind its function props using bs.send
-     *
-     * The consumer should not need to deal with this type.
-     */
-    type credentialsObject;
+    module Metadata = {
+      type t;
+      [@bs.module "grpc"] [@bs.new] external make : unit => t = "Metadata";
+      [@bs.send] external set : (t, string, string) => unit = "";
+      let set = (t, key, value) => {
+        set(t, key, value);
+        t
+      };
+      module Generator = {
+        /** the type of the function you must call to furnish an RPC invocation with
+         either its metadata or a metadata generation error. see \`makeGenerator\`
+        for details */
+        type complete = (Js.Nullable.t(exn), t) => unit;
+        /** consumers of bs-grpc who want to use metadata must implement a function
+         of this type. see \`makeGenerator\` for more details */
+        type generatorImplementation = (unit, complete) => unit;
+        /** a grpc-node metadata generator object. see \`generatorImplementation\`
+         for more details */
+        type t;
+        /** to populate a grpc request with metadata, grpc-node requires you to
+         supply a metadata generator function, which receives as its first argument
+         the call object reflecting the request payload (not available in this
+         binding) while the second argument is a function your metadata generator
+         function must invoke with either an exception or the resulting metadata */
+        [@bs.module "grpc"]
+        [@bs.scope "credentials"]
+        external make : generatorImplementation => t = "createFromMetadataGenerator";
+      };
+    };
 
-    [@bs.module "grpc"]
-    [@bs.scope "credentials"]
-    external createInsecure : unit => channelCredentials = "";
+    module Credentials = {
+      [@bs.module "grpc"]
+      [@bs.scope "credentials"]
+      external createInsecure : unit => channelCredentials = "";
 
+      [@bs.module "grpc"]
+      [@bs.scope "credentials"]
+      external createSsl : (buffer, buffer, buffer) => channelCredentials = "";
 
+      [@bs.module "grpc"]
+      [@bs.scope "credentials"]
+      external combine
+        : (channelCredentials, callCredentials)
+        => channelCredentials
+        = "combineChannelCredentials";
 
-    [@bs.send]
-    external createSsl : (credentialsObject, buffer, buffer, buffer) => channelCredentials = "";
-
-    [@bs.send]
-    external combineCredentials : (credentialsObject, channelCredentials, callCredentials) => channelCredentials = "";
+      [@bs.module "grpc"]
+      [@bs.scope "credentials"]
+      external combineWithMetadataGenerator
+        : (channelCredentials, callCredentials, Metadata.Generator.t)
+        => channelCredentials
+        = "combineChannelCredentials";
+    }
   };
-
-  /* we type and obtain a reference to the grpc module so that we can
-   * access its properties
-   *
-   * TODO this can probably be removed
-   */
-  [@bs.deriving abstract]
-  type grpcModule = {
-    [@bs.as "ServerCredentials"] serverCredentials : Server.Credentials.serverCredentialsConstructor,
-  };
-  [@bs.module] external grpc : grpcModule = "";
 
   /* use this to load a nodejs Buffer object containing a base64-encoded
    * PEM format key/certificate
