@@ -32,6 +32,10 @@ const preBoilerPlate = `
   type callCredentials;
   type serverCredentials;
 
+  /* protobufjs uses ByteBuffer abstraction over Node Buffer */
+  type byteBuffer;
+  [@bs.send] external bufferOfByteBuffer : byteBuffer => Node.buffer = "toBuffer";
+
   /* flatMap an array of Futures */
   let futureFlatMapArray =
       (f: 'a => Future.t('b), maxConcurrent, xs: array('a)) =>
@@ -1037,6 +1041,24 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           })
           code += `
             });
+
+            [@bs.deriving abstract]
+            type codec = {
+              encode: (t, justNull, justNull) => byteBuffer,
+              decode: (Node.buffer, justNull, justNull) => t
+            };
+
+            [@bs.get]
+            external codec : grpcProtoHandle => codec =
+              ${quote(upper1(lastDottedPart(module.moduleName)))};
+
+            let codec = myProtoHandle |. codec;
+
+            let encode = codec |. encode;
+            let decode = codec |. decode;
+
+            let encode = x => x |. encode(Js.Nullable.undefined, Js.Nullable.undefined) |. bufferOfByteBuffer;
+            let decode = x => x |. decode(Js.Nullable.undefined, Js.Nullable.undefined);
           `
         }
       } else if ('enumValues' in module.t) {
