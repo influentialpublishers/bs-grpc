@@ -4,9 +4,6 @@
   "sources": [{
     "dir" : "src",
     "subdirs" : true
-  },{
-    "dir" : "example",
-    "subdirs" : true
   }],
   "package-specs": {
     "module": "commonjs",
