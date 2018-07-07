@@ -1041,26 +1041,27 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           })
           code += `
             });
-
-            [@bs.deriving abstract]
-            type codec = {
-              encode: (t, justNull, justNull) => byteBuffer,
-              decode: (Node.buffer, justNull, justNull) => t
-            };
-
-            [@bs.get]
-            external codec : grpcProtoHandle => codec =
-              ${quote(upper1(lastDottedPart(module.moduleName)))};
-
-            let codec = myProtoHandle |. codec;
-
-            let encode = codec |. encode;
-            let decode = codec |. decode;
-
-            let encode = x => x |. encode(Js.Nullable.undefined, Js.Nullable.undefined) |. bufferOfByteBuffer;
-            let decode = x => x |. decode(Js.Nullable.undefined, Js.Nullable.undefined);
           `
         }
+        code += `
+          [@bs.deriving abstract]
+          type codec = {
+            encode: (t, justNull, justNull) => byteBuffer,
+            decode: (Node.buffer, justNull, justNull) => t
+          };
+
+          [@bs.get]
+          external codec : grpcProtoHandle => codec =
+            ${quote(upper1(lastDottedPart(module.moduleName)))};
+
+          let codec = myProtoHandle |. codec;
+
+          let encode = codec |. encode;
+          let decode = codec |. decode;
+
+          let encode = x => x |. encode(Js.Nullable.undefined, Js.Nullable.undefined) |. bufferOfByteBuffer;
+          let decode = x => x |. decode(Js.Nullable.undefined, Js.Nullable.undefined);
+        `
       } else if ('enumValues' in module.t) {
         const shortName = lastDottedPart(module.moduleName)
         code += `
