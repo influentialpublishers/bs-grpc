@@ -42,9 +42,6 @@ GOOGLE_PROTOBUF_PROTOS_DIR="$GRPC_TOOLS_DIR/bin/google/protobuf"
 # Path to entry point need to generate above-mentioned codecs
 PLUGIN_PROTO="$GRPC_TOOLS_DIR/bin/google/protobuf/compiler/plugin.proto"
 
-# Path to protoc protobufs compiler provided by grpc-tools
-PROTOC="$GRPC_TOOLS_DIR/bin/protoc.js"
-
 # Make sure MY_SRC_DIR exists
 [ -d "$MY_SRC_DIR" ] || mkdir "$MY_SRC_DIR" || exit 1
 
@@ -57,4 +54,4 @@ PROTOC="$GRPC_TOOLS_DIR/bin/protoc.js"
   > src/protobufs.js
 
 # Invoke protoc
-PATH="$MY_DIR:$PATH" yarn grpc_tools_node_protoc $* --reasonml_out=src && bsrefmt --in-place src/Grpc.re
+PATH="$MY_DIR:$PATH" yarn grpc_tools_node_protoc -I. "-I$MY_PKG_DIR" $* --reasonml_out=src && bsrefmt --in-place src/Grpc.re

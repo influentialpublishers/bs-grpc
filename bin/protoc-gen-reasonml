@@ -301,7 +301,7 @@ const preBoilerPlate = `
   type justNull = Js.Nullable.t(uninstantiable);
   type grpcLoadResult;
 
-  [@bs.module "grpc"] external grpcLoadProto : string => grpcLoadResult = "load";
+  [@bs.module "bs-grpc"] external grpcLoadProto : string => grpcLoadResult = "load";
 
   /* Represents a grpc.Server object */
   type server;
@@ -345,7 +345,7 @@ let makeServerModule = (serviceModules) => {
        * grpc.ServerCredentials
        */
       module Ssl = {
-        [@bs.module "grpc"]
+        [@bs.module "bs-grpc"]
         [@bs.scope "ServerCredentials"]
         external make : (buffer, array(ServerKeyAndCert.t), bool) => serverCredentials =
           "createSsl";
@@ -357,13 +357,13 @@ let makeServerModule = (serviceModules) => {
           );
       };
       module Insecure = {
-        [@bs.module "grpc"]
+        [@bs.module "bs-grpc"]
         [@bs.scope "ServerCredentials"]
         external make : unit => serverCredentials = "createInsecure";
       };
     };
 
-    [@bs.module "grpc"][@bs.new]
+    [@bs.module "bs-grpc"][@bs.new]
     external newServer : unit => server = "Server";
 
     [@bs.send]
@@ -392,7 +392,7 @@ const boilerPlate2 = `
   module Client = {
     module Metadata = {
       type t;
-      [@bs.module "grpc"] [@bs.new] external make : unit => t = "Metadata";
+      [@bs.module "bs-grpc"] [@bs.new] external make : unit => t = "Metadata";
       [@bs.send] external set : (t, string, string) => unit = "";
       let set = (t, key, value) => {
         set(t, key, value);
@@ -411,7 +411,7 @@ const boilerPlate2 = `
          the call object reflecting the request payload (not available in this
          binding) while the second argument is a function your metadata generator
          function must invoke with either an exception or the resulting metadata */
-        [@bs.module "grpc"]
+        [@bs.module "bs-grpc"]
         [@bs.scope "credentials"]
         external make : generatorImplementation => callCredentials =
           "createFromMetadataGenerator";
@@ -419,22 +419,22 @@ const boilerPlate2 = `
     };
 
     module Credentials = {
-      [@bs.module "grpc"]
+      [@bs.module "bs-grpc"]
       [@bs.scope "credentials"]
       external createInsecure : unit => channelCredentials = "";
 
-      [@bs.module "grpc"]
+      [@bs.module "bs-grpc"]
       [@bs.scope "credentials"]
       external createSsl : (buffer, buffer, buffer) => channelCredentials = "";
 
-      [@bs.module "grpc"]
+      [@bs.module "bs-grpc"]
       [@bs.scope "credentials"]
       external combine
         : (channelCredentials, callCredentials)
         => channelCredentials
         = "combineChannelCredentials";
 
-      [@bs.module "grpc"]
+      [@bs.module "bs-grpc"]
       [@bs.scope "credentials"]
       external combine3
         : (channelCredentials, callCredentials, callCredentials)
@@ -567,8 +567,22 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
    * apparently do the extend at protoc's runtime. Until a better solution is
    * discovered, I am blacklisting the following root packages (__no_emit being
    * my own invention) so that we do not emit code for them.
+   *
+   * It seems that __no_emit was not actually useful as in order to access any
+   * extensions defined by a .proto package with such a name, you'd have to
+   * write __no_emit everywhere, and I find that too unattractive. I'm leaving
+   * it in here in case someone finds it useful, though.
+   *
+   * I'm adding 'tin' to this list so that users can import tin.proto and we
+   * don't emit code for it, however I've decided that this simply isn't the
+   * best way to do this. In the case of tin.proto, for now at least, it would
+   * work to simply check whether or not the file defines any messages or
+   * services, and omit emission in such a case.
+   *
+   * TODO investigate using CodeGeneratorRequest.file_to_generate or
+   * CodeGeneratorRequest.parameter
    */
-  const packagePrefixesToIgnore = ['__no_emit', 'google']
+  const packagePrefixesToIgnore = ['__no_emit', 'google', 'tin']
   req.protoFile = req.protoFile.filter(protoFile =>
     !packagePrefixesToIgnore.some(prefix =>
       protoFile.package.substr(0, prefix.length) == prefix
@@ -580,8 +594,8 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
   function handleFieldValidationOptions(field) {
     if ('options' in field) {
       const options = field.options
-      if (options !== null && '.tinFieldValidation' in options) {
-        const validationSource = options['.tinFieldValidation']
+      if (options !== null && '.tin.fieldValidation' in options) {
+        const validationSource = options['.tin.fieldValidation']
         return validationSource
       }
     }
@@ -591,8 +605,8 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     /* check for validation criteria */
     if('options' in messageType) {
       const options = messageType.options
-      if (options !== null && '.tinMessageValidation' in options) {
-        const validationSource = options['.tinMessageValidation']
+      if (options !== null && '.tin.messageValidation' in options) {
+        const validationSource = options['.tin.messageValidation']
         return validationSource
       }
     }
