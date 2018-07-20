@@ -1,7 +1,7 @@
 const grpc = require('grpc')
 const protoLoader = require('grpc-alt-proto-loader')
 const path = require('path')
-const resolve = require('resolve').sync
+const resolve = require('resolve')
 
 const protoLoaderOptions = {
   oneofs: true,
