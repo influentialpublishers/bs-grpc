@@ -1,6 +1,7 @@
 const grpc = require('grpc')
 const protoLoader = require('grpc-alt-proto-loader')
 const path = require('path')
+const resolve = require('resolve').sync
 
 const protoLoaderOptions = {
   oneofs: true,
@@ -9,7 +10,7 @@ const protoLoaderOptions = {
   includeDirs: [
     '.',
     path.resolve(__dirname, '..'),
-    path.resolve(__dirname, '..', 'node_modules', 'grpc-tools', 'bin'),
+    path.resolve(path.dirname(resolve.sync('grpc-tools', { basedir: '.' })), 'bin'),
   ]
 }
 
