@@ -766,9 +766,9 @@ readable-stream@^2.0.0, readable-stream@^2.0.6, readable-stream@^2.1.4:
     string_decoder "~1.1.1"
     util-deprecate "~1.0.1"
 
-reason-future@^2.2.1:
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/reason-future/-/reason-future-2.2.1.tgz#35bb1f3e49f3bce14024b9c79a9ea6bc9fa1cd19"
+reason-future@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/reason-future/-/reason-future-2.3.1.tgz#e86a5b835e542caa7c140ba2379be6d06ff0d2d0"
 
 request@2.81.0:
   version "2.81.0"
