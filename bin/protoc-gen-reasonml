@@ -1073,23 +1073,20 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           `
         }
         code += `
-          [@bs.deriving abstract]
-          type codec = {
-            encode: (t, justNull, justNull) => byteBuffer,
-            decode: (Node.buffer, justNull, justNull) => t
-          };
+           type codec;
 
-          [@bs.get]
-          external codec : grpcProtoHandle => codec =
-            ${quote(upper1(lastDottedPart(module.moduleName)))};
+          [@bs.send] external encode : (codec, t, justNull, justNull) => byteBuffer = "";
+          [@bs.send] external decode : (codec, Node.buffer, justNull, justNull) => t = "";
+
+          [@bs.get] external codec : grpcProtoHandle => codec = "SearchQuerySave";
 
           let codec = myProtoHandle |. codec;
 
-          let encode = codec |. encodeGet;
-          let decode = codec |. decodeGet;
-
-          let encode = x => x |. encode(Js.Nullable.undefined, Js.Nullable.undefined) |. bufferOfByteBuffer;
-          let decode = x => x |. decode(Js.Nullable.undefined, Js.Nullable.undefined);
+          let encode = x =>
+            encode(codec, x, Js.Nullable.undefined, Js.Nullable.undefined)
+            |. bufferOfByteBuffer;
+          let decode = x =>
+            decode(codec, x, Js.Nullable.undefined, Js.Nullable.undefined);
         `
       } else if ('enumValues' in module.t) {
         const shortName = lastDottedPart(module.moduleName)
