@@ -35,7 +35,7 @@ const preBoilerPlate = `
 
   /* protobufjs uses ByteBuffer abstraction over Node Buffer */
   type byteBuffer;
-  [@bs.send] external bufferOfByteBuffer : byteBuffer => Node.buffer = "toBuffer";
+  [@bs.send] external bufferOfByteBuffer : byteBuffer => Node.buffer = "finish";
 
   /* flatMap an array of Futures */
   let futureFlatMapArray =
