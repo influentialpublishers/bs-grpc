@@ -8,15 +8,6 @@
   dependencies:
     lodash "^4.17.4"
 
-"@grpc/proto-loader@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@grpc/proto-loader/-/proto-loader-0.1.0.tgz#a79f04678856f32d03e799fe87d06b7321d09f3b"
-  dependencies:
-    "@types/lodash" "^4.14.104"
-    "@types/node" "^9.4.6"
-    lodash "^4.17.5"
-    protobufjs "^6.8.6"
-
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@protobufjs/aspromise/-/aspromise-1.1.2.tgz#9b8b0cc663d669a7d8f6f5d0893a14d348f30fbf"
@@ -355,14 +346,14 @@ graceful-fs@^4.1.2:
   version "4.1.11"
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.1.11.tgz#0e8bdfe4d1ddb8854d64e04ea7c00e2a026e5658"
 
-grpc-alt-proto-loader@^0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/grpc-alt-proto-loader/-/grpc-alt-proto-loader-0.4.1.tgz#7abbc04dde7e3ff0c1718d51725ab068e09854ed"
+grpc-alt-proto-loader@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/grpc-alt-proto-loader/-/grpc-alt-proto-loader-0.5.0.tgz#67eea82750647f7644d157ae6d61b8097c8f99d3"
   dependencies:
     "@types/lodash" "^4.14.104"
     "@types/node" "^9.4.6"
     lodash "^4.17.5"
-    protobufjs "^6.8.6"
+    protobufjs "6.8.6"
 
 grpc-tools@^1.6.6:
   version "1.6.6"
@@ -703,16 +694,7 @@ process-nextick-args@~2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.0.tgz#a37d732f4271b4ab1ad070d35508e8290788ffaa"
 
-protobufjs@^5.0.3:
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-5.0.3.tgz#e4dfe9fb67c90b2630d15868249bcc4961467a17"
-  dependencies:
-    ascli "~1"
-    bytebuffer "~5"
-    glob "^7.0.5"
-    yargs "^3.10.0"
-
-protobufjs@^6.8.6:
+protobufjs@6.8.6, protobufjs@^6.8.6:
   version "6.8.6"
   resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-6.8.6.tgz#ce3cf4fff9625b62966c455fc4c15e4331a11ca2"
   dependencies:
@@ -729,6 +711,15 @@ protobufjs@^6.8.6:
     "@types/long" "^3.0.32"
     "@types/node" "^8.9.4"
     long "^4.0.0"
+
+protobufjs@^5.0.3:
+  version "5.0.3"
+  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-5.0.3.tgz#e4dfe9fb67c90b2630d15868249bcc4961467a17"
+  dependencies:
+    ascli "~1"
+    bytebuffer "~5"
+    glob "^7.0.5"
+    yargs "^3.10.0"
 
 punycode@^1.4.1:
   version "1.4.1"
