@@ -1078,7 +1078,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           [@bs.send] external encode : (codec, t, justNull, justNull) => byteBuffer = "";
           [@bs.send] external decode : (codec, Node.buffer, justNull, justNull) => t = "";
 
-          [@bs.get] external codec : grpcProtoHandle => codec = "SearchQuerySave";
+          [@bs.get] external codec : grpcProtoHandle => codec = ${quote(lastDottedPart(module.moduleName))};
 
           let codec = myProtoHandle |. codec;
 
