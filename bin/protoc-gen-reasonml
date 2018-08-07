@@ -108,6 +108,7 @@ const preBoilerPlate = `
     exception NumberNotPositiveError;
     exception RegexMatchError;
     exception TransFieldError(string);
+    exception EmptyOneof(string);
 
     /* invokes user-supplied function to perform multi-field
      * validation, if such a function is supplied
@@ -1032,6 +1033,17 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
               } else {
                 code += `~${field.name} =? ${field.name}Ref^,\n`
               }
+            })
+            module.t.oneofs.forEach(oneof => {
+              code += `/* oneof arg */ ~${oneof.name} = `
+              oneof.fields.forEach(field => {
+                if (fieldsToValidate.indexOf(field) < 0) {
+                  code += `x |. ${field.name}Get != None ? x |. ${field.name}Get :\n`
+                } else {
+                  code += `${field.name}Ref^ != None ? "${field.name}" :\n`
+                }
+              })
+              code += `raise(Validation.EmptyOneof(${quote(oneof.name)})),/* oneof arg done */\n`
             })
             code += `
                       ())
