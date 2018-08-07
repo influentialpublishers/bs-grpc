@@ -1038,7 +1038,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
               code += `/* oneof arg */ ~${oneof.name} = `
               oneof.fields.forEach(field => {
                 if (fieldsToValidate.indexOf(field) < 0) {
-                  code += `x |. ${field.name}Get != None ? x |. ${field.name}Get :\n`
+                  code += `x |. ${field.name}Get != None ? "${field.name}" :\n`
                 } else {
                   code += `${field.name}Ref^ != None ? "${field.name}" :\n`
                 }
