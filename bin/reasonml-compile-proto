@@ -54,4 +54,4 @@ PLUGIN_PROTO="$GRPC_TOOLS_DIR/bin/google/protobuf/compiler/plugin.proto"
   > src/protobufs.js
 
 # Invoke protoc
-PATH="$MY_DIR:$PATH" yarn grpc_tools_node_protoc -I. "-I$MY_PKG_DIR" $* --reasonml_out=src && bsrefmt --in-place src/Grpc.re
+PATH="$MY_DIR:$PATH" yarn grpc_tools_node_protoc -I. $PROTOC_FLAGS "-I$MY_PKG_DIR" $* --reasonml_out=src && bsrefmt --in-place src/Grpc.re
