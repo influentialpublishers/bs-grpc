@@ -584,7 +584,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
    * TODO investigate using CodeGeneratorRequest.file_to_generate or
    * CodeGeneratorRequest.parameter
    */
-  const packagePrefixesToIgnore = ['__no_emit', 'google', 'tin']
+  const packagePrefixesToIgnore = ['__no_emit', 'google.', 'tin.']
   req.protoFile = req.protoFile.filter(protoFile =>
     !packagePrefixesToIgnore.some(prefix =>
       protoFile.package.substr(0, prefix.length) == prefix
