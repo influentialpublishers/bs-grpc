@@ -1,6 +1,6 @@
 {
   "name": "bs-grpc",
-  "version": "0.13.8-rc0",
+  "version": "0.13.8-rc1",
   "scripts": {
     "clean": "bsb -clean-world",
     "build": "npm run compile-static-protobuf-compiler-protobufs",
