@@ -7,6 +7,7 @@ const protoLoaderOptions = {
   oneofs: true,
   defaults: false,
   keepCase: true,
+  enums: String,
   includeDirs: [
     '.',
     path.resolve(__dirname, '..'),

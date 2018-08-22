@@ -538,17 +538,17 @@ const mapType = (field, scopeName) => {
       return ['/* required */', justType]
   }
 }
-/** similar to mapType, but emits 'int' for ENUMs */
+/** similar to mapType, but emits 'string' for ENUMs */
 const mapTypeForMessageField = (field, scopeName) => {
   if (field.type == protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_ENUM)
-    field = {...field, type: protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_INT32}
+    field = {...field, type: protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_STRING}
   return mapType(field, scopeName)
 }
 function isEnumField(field) { return field.type == protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_ENUM }
 function someEnumFields(fields) { return fields.some(isEnumField) }
 /* make function names for converting between protobufjs' representation of values of enums and bs-grpc's representation */
-function makeFunNameConvEnumOfInt(enumModuleRef) { return `${upper1(enumModuleRef)}.${lower1(enumModuleRef)}OfInt` }
-function makeFunNameConvIntOfEnum(enumModuleRef) { return `${upper1(enumModuleRef)}.intOf${upper1(enumModuleRef)}` }
+function makeFunNameConvEnumOfString(enumModuleRef) { return `${upper1(enumModuleRef)}.${lower1(enumModuleRef)}OfString` }
+function makeFunNameConvStringOfEnum(enumModuleRef) { return `${upper1(enumModuleRef)}.stringOf${upper1(enumModuleRef)}` }
 
 require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
   let protoHandleFields = ''
@@ -858,7 +858,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           module.t.fields.forEach(field => {
             if (isEnumField(field)) {
               const enumModuleRef = resolveRelative(mapTypeNameToModuleName(field.typeName), module.moduleName)
-              const conv = makeFunNameConvIntOfEnum(enumModuleRef)
+              const conv = makeFunNameConvStringOfEnum(enumModuleRef)
               code += `~${lower1(field.name)} =? (`
               if (field.label == protobufs.google.protobuf.FieldDescriptorProto.Label.LABEL_OPTIONAL)
                 code += `Validation.optionMap`
@@ -873,7 +873,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           module.t.fields.forEach(field => {
             if (isEnumField(field)) {
               const enumModuleRef = resolveRelative(mapTypeNameToModuleName(field.typeName), module.moduleName)
-              const conv = makeFunNameConvEnumOfInt(enumModuleRef)
+              const conv = makeFunNameConvEnumOfString(enumModuleRef)
               code += `/* enum converting getter */
                 let ${field.name}Get =
               `
@@ -1118,11 +1118,27 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         })
         code += `
           | x => raise(BsGrpcDecoderError({j|bs-grpc encountered invalid ${shortName} enum value $x|j}));
+          /** convert a grpc symbolic enum string to its ${shortName}.t counterpart; internal */
+          let ${lower1(shortName)}OfString = fun
+        `
+        module.t.enumValues.forEach(enumValue => {
+          code += `| ${quote(enumValue.name)} => ${enumValue.name}\n`
+        })
+        code += `
+          | x => raise(BsGrpcDecoderError({j|bs-grpc encountered invalid ${shortName} enum value $x|j}));
           /** convert a ${shortName}.t to its the grpc enum ordinal counterpart; internal */
           let intOf${upper1(shortName)} = fun
         `
         module.t.enumValues.forEach(enumValue => {
           code += `| ${enumValue.name} => ${enumValue.number}\n`
+        })
+        code += `
+          | x => raise(BsGrpcDecoderError({j|bs-grpc encountered invalid ${shortName} enum value $x|j}));
+          /** convert a ${shortName}.t to its the grpc symbolic enum string counterpart; internal */
+          let stringOf${upper1(shortName)} = fun
+        `
+        module.t.enumValues.forEach(enumValue => {
+          code += `| ${enumValue.name} => ${quote(enumValue.name)}\n`
         })
       }
     }
