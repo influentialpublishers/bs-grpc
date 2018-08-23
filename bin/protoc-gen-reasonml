@@ -660,6 +660,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
   function mapEnumValues(values) {
     return values.map(enumValue => ({
       name: enumName(enumValue.name),
+      raw: enumValue.name,
       number: enumValue.number
     }))
   }
@@ -1122,7 +1123,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           let ${lower1(shortName)}OfString = fun
         `
         module.t.enumValues.forEach(enumValue => {
-          code += `| ${quote(enumValue.name)} => ${enumValue.name}\n`
+          code += `| ${quote(enumValue.raw)} => ${enumValue.name}\n`
         })
         code += `
           | x => raise(BsGrpcDecoderError({j|bs-grpc encountered invalid ${shortName} enum value $x|j}));
@@ -1138,7 +1139,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           let stringOf${upper1(shortName)} = fun
         `
         module.t.enumValues.forEach(enumValue => {
-          code += `| ${enumValue.name} => ${quote(enumValue.name)}\n`
+          code += `| ${enumValue.name} => ${quote(enumValue.raw)}\n`
         })
       }
     }
