@@ -27,6 +27,22 @@ const preBoilerPlate = `
   type grpcClientRpcInvokeError;
   /* simply wraps grpcClientRpcInvokeError when an exception is needed */
   exception GrpcClientRpcInvokeError(grpcClientRpcInvokeError);
+  /* protobufjs prefers the \`long\` package on npm for 64-bit type representation */
+  module Long {
+    type t;
+    [@bs.module "long"]
+    external fromString : string => t = "";
+    [@bs.module "long"]
+    external fromFloat : float => t = "fromNumber";
+    [@bs.module "long"]
+    external fromInt : int => t = "fromNumber";
+    [@bs.module "long"]
+    external fromValue : 'a => t = "";
+    [@bs.send]
+    external toFloat : t => float = "toNumber";
+    [@bs.send]
+    external toString : t => string = "toString";
+  };
 
   /* "channel credentials" seem to be needed for creating a client */
   type channelCredentials;
@@ -517,13 +533,12 @@ const mapJustType = (fieldProto, scopeName) => {
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_SINT32:
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_UINT32:
       return 'int'
-    /* TODO in the future we'll want more flexibility in how we represent 64-bit values */
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_FIXED64:
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_INT64:
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_SFIXED64:
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_SINT64:
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_UINT64:
-      return 'string'
+      return 'Long.t'
   }
 }
 const mapType = (field, scopeName) => {
