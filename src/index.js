@@ -25,3 +25,4 @@ module.exports.load = filename => {
   protoLoader.addTypesToGrpcObject(grpcObject, protoLoaderResult.messageTypes)
   return grpcObject
 }
+module.exports.protoLoaderOptions = protoLoaderOptions
