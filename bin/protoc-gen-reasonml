@@ -44,14 +44,15 @@ const preBoilerPlate = `
     external toString : t => string = "toString";
   };
 
+
   [@bs.deriving abstract]
-  type protobufjsToObjectOptions = {
-    [@bs.optional]
-    oneofs: bool
-  };
-  let myProtobufjsToObjectOptions = protobufjsToObjectOptions(
-    ~oneofs = true
-  , ());
+  type protobufjsToObjectOptions;
+  let myProtobufjsToObjectOptions : protobufjsToObjectOptions = [%bs.raw {|{
+      oneofs: true,
+      defaults: false,
+      keepCase: true,
+      enums: String,
+  }|}];
 
   /* "channel credentials" seem to be needed for creating a client */
   type channelCredentials;
