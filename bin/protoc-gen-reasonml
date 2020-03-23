@@ -347,7 +347,7 @@ let makeServerModule = (serviceModules) => {
        * grpc.ServerCredentials
        */
       module Ssl = {
-        [@bs.module "bs-grpc"]
+        [@bs.module "@grpc/grpc-js"]
         [@bs.scope "ServerCredentials"]
         external make : (buffer, array(ServerKeyAndCert.t), bool) => serverCredentials =
           "createSsl";
@@ -359,17 +359,17 @@ let makeServerModule = (serviceModules) => {
           );
       };
       module Insecure = {
-        [@bs.module "bs-grpc"]
+        [@bs.module "@grpc/grpc-js"]
         [@bs.scope "ServerCredentials"]
         external make : unit => serverCredentials = "createInsecure";
       };
     };
 
-    [@bs.module "bs-grpc"][@bs.new]
+    [@bs.module "@grpc/grpc-js"][@bs.new]
     external newServer : unit => server = "Server";
 
     [@bs.send]
-    external serverBind : (server, string, serverCredentials) => unit = "bind";
+    external serverBind: (server, string, serverCredentials, (string, int) => unit) => unit = "bindAsync";
 
     [@bs.send]
     external start : server => unit = "start";
@@ -381,9 +381,16 @@ let makeServerModule = (serviceModules) => {
       host,
     ) => {
       let server = newServer();
-      serverBind(server, host, credentials);
-      ${bindServicesCode}
-      start(server);
+      serverBind(
+        server,
+        host,
+        credentials,
+        (error, port) => {
+          ${bindServicesCode}
+          start(server);
+          ();
+        },
+      );
       server;
     };
   };
@@ -394,7 +401,7 @@ const boilerPlate2 = `
   module Client = {
     module Metadata = {
       type t;
-      [@bs.module "bs-grpc"] [@bs.new] external make : unit => t = "Metadata";
+      [@bs.module "@grpc/grpc-js"] [@bs.new] external make : unit => t = "Metadata";
       [@bs.send] external set : (t, string, string) => unit = "";
       let set = (t, key, value) => {
         set(t, key, value);
@@ -413,7 +420,7 @@ const boilerPlate2 = `
          the call object reflecting the request payload (not available in this
          binding) while the second argument is a function your metadata generator
          function must invoke with either an exception or the resulting metadata */
-        [@bs.module "bs-grpc"]
+        [@bs.module "@grpc/grpc-js"]
         [@bs.scope "credentials"]
         external make : generatorImplementation => callCredentials =
           "createFromMetadataGenerator";
@@ -421,22 +428,22 @@ const boilerPlate2 = `
     };
 
     module Credentials = {
-      [@bs.module "bs-grpc"]
+      [@bs.module "@grpc/grpc-js"]
       [@bs.scope "credentials"]
       external createInsecure : unit => channelCredentials = "";
 
-      [@bs.module "bs-grpc"]
+      [@bs.module "@grpc/grpc-js"]
       [@bs.scope "credentials"]
       external createSsl : (buffer, buffer, buffer) => channelCredentials = "";
 
-      [@bs.module "bs-grpc"]
+      [@bs.module "@grpc/grpc-js"]
       [@bs.scope "credentials"]
       external combine
         : (channelCredentials, callCredentials)
         => channelCredentials
         = "combineChannelCredentials";
 
-      [@bs.module "bs-grpc"]
+      [@bs.module "@grpc/grpc-js"]
       [@bs.scope "credentials"]
       external combine3
         : (channelCredentials, callCredentials, callCredentials)
@@ -453,37 +460,37 @@ const boilerPlate2 = `
 `
 
 const dottedModuleName = moduleName =>
-  moduleName.split('.').map((s,i) =>
+  moduleName.split('.').map((s, i) =>
     s[0].toUpperCase() + s.substr(1)
   ).join('.')
 const lastDottedPart = moduleName => {
   const a = moduleName.split('.')
-  return a[a.length-1]
+  return a[a.length - 1]
 }
 const mapMessageType = messageType => messageType[1].toUpperCase() + messageType.substr(2) + '.t';
 const mapTypeNameToModuleName = enumTypeName => enumTypeName[1].toUpperCase() + enumTypeName.substr(2)
 const mapEnumType = enumTypeName => mapTypeNameToModuleName(enumTypeName) + '.t';
-const joinModuleName = (...args) => args.map(s => s[0]=='.'?s.substr(1):s).join('.')
+const joinModuleName = (...args) => args.map(s => s[0] == '.' ? s.substr(1) : s).join('.')
 const resolveRelative = (moduleName, scopeName) => {
   const scopeParts = scopeName.split('.')
   const moduleParts = moduleName.split('.')
   const max = Math.max(scopeParts.length, moduleParts.length)
-  for (let i=0; i<max; i++)
+  for (let i = 0; i < max; i++)
     if (scopeParts[i] !== moduleParts[i])
       return moduleParts.slice(i).join('.')
   throw new Error("how do i name myself?")
 }
-const objMap = (o,f) => { let r = {}; for (let k in o) r[k] = f(o[k], k); return r } // TODO get from a standard lib?
-const objJoin = (o,s) => { let r = '', i=0; for (let k in o) r += (i?s+o[k]:o[k]); return r } // TODO get from a standard lib?
-const lower1 = s => s[0].toLowerCase()+s.substr(1)
-const upper1 = s => s[0].toUpperCase()+s.substr(1)
+const objMap = (o, f) => { let r = {}; for (let k in o) r[k] = f(o[k], k); return r } // TODO get from a standard lib?
+const objJoin = (o, s) => { let r = '', i = 0; for (let k in o) r += (i ? s + o[k] : o[k]); return r } // TODO get from a standard lib?
+const lower1 = s => s[0].toLowerCase() + s.substr(1)
+const upper1 = s => s[0].toUpperCase() + s.substr(1)
 const firstPart = s => s.split('.')[0]
 /* TODO double-check this work
  * TODO what is this called?
  */
 const sortish = (a, f) => {
-  for (let i=0; i<a.length; i++) {
-    for (let j=i+1; j<a.length; j++) {
+  for (let i = 0; i < a.length; i++) {
+    for (let j = i + 1; j < a.length; j++) {
       if (f(a[i], a[j]) < 0) {
         const tmp = a[i]
         a[i] = a[j]
@@ -497,7 +504,7 @@ const mapJustType = (fieldProto, scopeName) => {
   switch (fieldProto.type) {
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_GROUP:
     default:
-      return 'unknown_type /*'+type+'*/';
+      return 'unknown_type /*' + type + '*/';
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_ENUM:
       return upper1(resolveRelative(mapEnumType(fieldProto.typeName), scopeName))
     case protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_MESSAGE:
@@ -541,7 +548,7 @@ const mapType = (field, scopeName) => {
 /** similar to mapType, but emits 'int' for ENUMs */
 const mapTypeForMessageField = (field, scopeName) => {
   if (field.type == protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_ENUM)
-    field = {...field, type: protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_INT32}
+    field = { ...field, type: protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_INT32 }
   return mapType(field, scopeName)
 }
 function isEnumField(field) { return field.type == protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_ENUM }
@@ -550,7 +557,7 @@ function someEnumFields(fields) { return fields.some(isEnumField) }
 function makeFunNameConvEnumOfInt(enumModuleRef) { return `${upper1(enumModuleRef)}.${lower1(enumModuleRef)}OfInt` }
 function makeFunNameConvIntOfEnum(enumModuleRef) { return `${upper1(enumModuleRef)}.intOf${upper1(enumModuleRef)}` }
 
-require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
+require('read-all-stream')(process.stdin, { encoding: null }).then(buf => {
   let protoHandleFields = ''
   const reader = pbjs.Reader.create(buf)
   const req = protobufs.google.protobuf.compiler.CodeGeneratorRequest.decode(buf)
@@ -591,7 +598,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     )
   )
 
-  const rootModule = {moduleName:'*root*', modules:{}}
+  const rootModule = { moduleName: '*root*', modules: {} }
 
   function handleFieldValidationOptions(field) {
     if ('options' in field) {
@@ -605,7 +612,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
 
   function handleMessageValidationOptions(messageType) {
     /* check for validation criteria */
-    if('options' in messageType) {
+    if ('options' in messageType) {
       const options = messageType.options
       if (options !== null && '.tin.messageValidation' in options) {
         const validationSource = options['.tin.messageValidation']
@@ -617,7 +624,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
   function handleMessageType(parentModule, messageType) {
     /* Create module for this message type */
     const moduleName = dottedModuleName(joinModuleName(parentModule.moduleName, messageType.name))
-    const module =  {
+    const module = {
       modules: {},
       moduleName
     }
@@ -763,7 +770,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
     if ('t' in module) {
       /* we could emit our 't' without this, but this is necessary for
        * detecting cyclic dependencies */
-      dependencies.push([module.moduleName, module.moduleName+'.t'])
+      dependencies.push([module.moduleName, module.moduleName + '.t'])
       if ('fields' in module.t) {
         module.t.fields.forEach(field => {
           if (field.type == protobufs.google.protobuf.FieldDescriptorProto.Type.TYPE_ENUM
@@ -808,7 +815,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
         position: dependencySortedModuleNames.indexOf(moduleName)
       }
     })
-    subModuleOrder.sort((a,b) => a.position-b.position)
+    subModuleOrder.sort((a, b) => a.position - b.position)
     /* emit code for each sub-module in order */
     subModuleOrder.forEach(subModulePosition => {
       const shortModuleName = subModulePosition.shortModuleName
@@ -977,10 +984,10 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
             let validate = x =>
               Future.make(resolve => {
             `
-            fieldsToValidate.forEach(field =>
-              code += `let ${field.name}Ref = ref(x |. ${field.name}Get);\n`
-            )
-            code += `
+          fieldsToValidate.forEach(field =>
+            code += `let ${field.name}Ref = ref(x |. ${field.name}Get);\n`
+          )
+          code += `
                 let n = ref(${fieldsToValidate.length});
                 let failed = ref(false);
                 /* message is valid; build the normalized message */
@@ -988,17 +995,17 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
                 let makeMessage = () => {
                   Belt.Result.Ok(t(
             `
-            fieldsToValidate.forEach(field =>
-              code += `~${field.name}=?${field.name}Ref^,\n`
-            )
-            code += `
+          fieldsToValidate.forEach(field =>
+            code += `~${field.name}=?${field.name}Ref^,\n`
+          )
+          code += `
                   ()))
                 };
                 */
                 let wholeMessageValidation =
             `
-            if (module.t.validation) {
-              code += `
+          if (module.t.validation) {
+            code += `
                   Validation.fieldMap @@
                   Validation.futureMap @@
                   Validation.resultOptionFlatMap @@
@@ -1008,10 +1015,10 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
                     }
                   );
               `
-            } else {
-              code += `x => x;`
-            }
-            code += `
+          } else {
+            code += `x => x;`
+          }
+          code += `
                 let fail = (fieldName, errMsg) => {
                   failed := true;
                   resolve(
@@ -1027,25 +1034,25 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
                     if (n^ == 0) {
                       t(
             `
-            module.t.fields.forEach(field => {
+          module.t.fields.forEach(field => {
+            if (fieldsToValidate.indexOf(field) < 0) {
+              code += `~${field.name} =? x |. ${field.name}Get,\n`
+            } else {
+              code += `~${field.name} =? ${field.name}Ref^,\n`
+            }
+          })
+          module.t.oneofs.forEach(oneof => {
+            code += `/* oneof arg */ ~${oneof.name} = `
+            oneof.fields.forEach(field => {
               if (fieldsToValidate.indexOf(field) < 0) {
-                code += `~${field.name} =? x |. ${field.name}Get,\n`
+                code += `x |. ${field.name}Get != None ? "${field.name}" :\n`
               } else {
-                code += `~${field.name} =? ${field.name}Ref^,\n`
+                code += `${field.name}Ref^ != None ? "${field.name}" :\n`
               }
             })
-            module.t.oneofs.forEach(oneof => {
-              code += `/* oneof arg */ ~${oneof.name} = `
-              oneof.fields.forEach(field => {
-                if (fieldsToValidate.indexOf(field) < 0) {
-                  code += `x |. ${field.name}Get != None ? "${field.name}" :\n`
-                } else {
-                  code += `${field.name}Ref^ != None ? "${field.name}" :\n`
-                }
-              })
-              code += `raise(Validation.EmptyOneof(${quote(oneof.name)})),/* oneof arg done */\n`
-            })
-            code += `
+            code += `raise(Validation.EmptyOneof(${quote(oneof.name)})),/* oneof arg done */\n`
+          })
+          code += `
                       ())
                       |> (x=>Some(x))
                       |> Validation.value(${quote(lastDottedPart(module.moduleName))})
@@ -1187,7 +1194,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
           let makeClient = (serverAddress, chanCreds) => makeClient(myServiceClient, serverAddress, chanCreds);
       `
       module.rpcs.forEach(rpc => {
-        const rpcModuleRef = upper1(rpc.name)+'Rpc'
+        const rpcModuleRef = upper1(rpc.name) + 'Rpc'
         const myModuleName = rpcModuleRef
         const inputType = rpcModuleRef + '.inputType'
         const outputType = rpcModuleRef + '.outputType'
@@ -1295,7 +1302,7 @@ require('read-all-stream')(process.stdin, {encoding:null}).then(buf => {
 
   if (process.stdout.isTTY) {
     console.log('stdout is a TTY; printing human-readable data')
-    console.log('output module tree:', util.inspect(rootModule, {depth:99}))
+    console.log('output module tree:', util.inspect(rootModule, { depth: 99 }))
     console.log('output source code:')
     console.log(emission)
   } else {

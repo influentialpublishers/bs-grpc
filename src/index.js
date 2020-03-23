@@ -1,7 +1,6 @@
-const grpc = require('grpc')
+const grpc = require('@grpc/grpc-js');
 const protoLoader = require('grpc-alt-proto-loader')
 const path = require('path')
-const resolve = require('resolve')
 
 const protoLoaderOptions = {
   oneofs: true,
@@ -10,15 +9,11 @@ const protoLoaderOptions = {
   includeDirs: [
     '.',
     path.resolve(__dirname, '..'),
-    path.resolve(path.dirname(resolve.sync('grpc-tools', { basedir: '.' })), 'bin'),
   ]
 }
 
-/* Emulate require('grpc') */
-for (let k in grpc)
-  module.exports[k] = grpc[k]
-
-module.exports.load = filename => {
+module.exports.load = (filename) => {
+  protoLoaderOptions.includeDirs.push(path.dirname(filename));
   const protoLoaderResult = protoLoader.loadSync(filename, protoLoaderOptions)
   const grpcObject = grpc.loadPackageDefinition(protoLoaderResult.packageDefinition)
   protoLoader.addTypesToGrpcObject(grpcObject, protoLoaderResult.messageTypes)

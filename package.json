@@ -20,9 +20,6 @@
   },
   "main": "src/index.js",
   "license": "MIT",
-  "devDependencies": {
-    "grpc": "^1.24.2"
-  },
   "dependencies": {
     "@grpc/grpc-js": "^0.1.0",
     "bs-platform": "^4.0.1",
