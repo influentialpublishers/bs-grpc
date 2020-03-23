@@ -6,7 +6,7 @@
  */
 const pbjs = require('protobufjs')
 const protobufs = require('../src/protobufs')
-const path = require('path')
+const Path = require('path')
 const fs = require('fs')
 const util = require('util')
 const toposort = require('toposort')
@@ -804,7 +804,7 @@ require('read-all-stream')(process.stdin, { encoding: null }).then(buf => {
       code += `
         type grpcProtoHandle;
         [@bs.get] external getProtoHandle : grpcLoadResult => grpcProtoHandle = "${module.packageName}";
-        let myProtoHandle = grpcLoadProto(Node.Path.resolve(Node.Process.cwd(), ${JSON.stringify(module.fileName)})) |> getProtoHandle;
+        let myProtoHandle = grpcLoadProto(${JSON.stringify(module.fileName)}) |> getProtoHandle;
       `
     }
     /* sort sub-modules by order of dependency */
