@@ -804,7 +804,7 @@ require('read-all-stream')(process.stdin, { encoding: null }).then(buf => {
       code += `
         type grpcProtoHandle;
         [@bs.get] external getProtoHandle : grpcLoadResult => grpcProtoHandle = "${module.packageName}";
-        let myProtoHandle = grpcLoadProto(${path.resolve(process.cwd(), JSON.stringify(module.fileName))}) |> getProtoHandle;
+        let myProtoHandle = grpcLoadProto(Node.Path.resolve(Node.Process.cwd(), ${JSON.stringify(module.fileName)})) |> getProtoHandle;
       `
     }
     /* sort sub-modules by order of dependency */
