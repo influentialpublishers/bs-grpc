@@ -21,7 +21,7 @@
   "main": "src/index.js",
   "license": "MIT",
   "devDependencies": {
-    "grpc": "^1.11.3"
+    "grpc": "^1.24.9"
   },
   "dependencies": {
     "@grpc/grpc-js": "^0.1.0",
